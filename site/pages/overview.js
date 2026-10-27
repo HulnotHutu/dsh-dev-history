@@ -7,7 +7,7 @@
       var bm = api.byMonth();
       var strip = Object.keys(bm).sort().map(function (k) {
         var ph = api.phaseOf(k) || { name: '', para: [] };
-        return '<a href="#/phases"><span class="m">' + api.monthKey(k) + ' · ' + ph.name +
+        return '<a href="#/phases?m=' + k + '"><span class="m">' + api.monthKey(k) + ' · ' + ph.name +
           '</span><span class="c">' + bm[k].length + ' 篇</span>' +
           '<span class="p">' + ph.para + '</span></a>';
       }).join('');
@@ -20,7 +20,6 @@
         '<p class="small"><i class="a k">◦</i> <b>已封存</b>——' + api.esc(api.fill(api.site['指南-已封存'])) + '</p>' +
         '<p class="small"><i class="r k">◇</i> <b>仅远端</b>——' + api.esc(api.fill(api.site['指南-仅远端'])) + '</p>' +
         '</div>' +
-        '<p class="small muted">推荐读法：' + api.esc(api.site['推荐读法'] || '') + '</p>' +
         '</section>' +
         '<section><h2>提出与封存的节奏</h2>' +
         '<p class="small muted">' + api.esc(api.site['节奏图说明'] || '') +

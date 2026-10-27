@@ -103,8 +103,10 @@
   function route() {
     var m = location.hash.match(/^#\/([a-z]+)/);
     var name = m && FILES[m[1]] ? m[1] : 'overview';
-    var qm = location.hash.match(/\?q=([^&]+)/);
+    var qm = location.hash.match(/[?&]q=([^&]+)/);
     D.presetQuery = qm ? decodeURIComponent(qm[1]) : '';
+    var pm = location.hash.match(/[?&]m=([^&]+)/);
+    D.presetMonth = pm ? decodeURIComponent(pm[1]) : '';
     current = name;
     paintNav();
     if (pages[name]) { paint(name); return; }
@@ -125,7 +127,8 @@
     main.innerHTML = '';
     pages[name].render(main, api);
     document.title = S['站名'] + ' · ' + (NAV_NAME[name] || '');
-    window.scrollTo(0, 0);
+    /* 带锚点/过滤参数进入时由页面自定位，不回顶 */
+    if (!D.presetMonth && !D.presetQuery) window.scrollTo(0, 0);
   }
   function paintNav() {
     Array.prototype.forEach.call(document.querySelectorAll('#nav a'), function (a) {

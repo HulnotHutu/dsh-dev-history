@@ -16,7 +16,7 @@
         var r = list.filter(function (x) { return x.s === 'r'; }).length;
         var breakdown = '全月 ' + list.length + ' 篇：' + a + ' 已封存 · ' + (i + r) + ' 现行' +
           (r ? '（' + r + ' 篇仅远端）' : '');
-        html += '<section class="phase-block"><header>' +
+        html += '<section class="phase-block" data-key="' + st.key + '"><header>' +
           '<span class="vol">' + CN[idx] + '</span>' +
           '<span class="m">' + api.monthKey(st.key) + ' · ' + st.name + '</span>' +
           '<span class="range">' + st.key.slice(0, 7) + '</span>' +
@@ -32,6 +32,15 @@
           }).join('') + '</ul></section>';
       });
       root.innerHTML = html;
+      if (api.data.presetMonth) {
+        var blk = root.querySelector('.phase-block[data-key="' + api.data.presetMonth + '"]');
+        if (blk) {
+          var smooth = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+          blk.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+          blk.classList.add('flash');
+          setTimeout(function () { blk.classList.remove('flash'); }, 1600);
+        }
+      }
     }
   });
 })();
