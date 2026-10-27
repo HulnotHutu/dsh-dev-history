@@ -1,0 +1,5 @@
+*.finalize.json
+*.finalize-summary.json
+*.browser-check.json
+*.delivery.json
+narrative.json.bak
