@@ -43,29 +43,29 @@
  "phases": [
   {
    "key": "2026-06",
-   "name": "骨架初定",
-   "para": "微内核事件分类、事件溯源会话、能力缝与 agent 生命周期当月定型，事件域语义与会话投影同步落位，构成沿用至今的架构骨架。能力侧以能力缝划分提供方与消费者，会话侧以事件日志为事实源，持久化与轮次封闭作为边界约束。运行时参数校验与结构化错误分类在模型边界上提供保护。",
+   "name": "骨架初立",
+   "para": "微内核事件分类为整个事件域定下三层命名；会话被确立为 append-only 事件日志，模型可见内容必须能从日志重建；能力 seam 以 Service Definition、Provider、Consumer 三角色划出可替换边界；agent 生命周期与所有权约定、会话轮次封闭、持久化策略、branded ID 与包层级也同期定型，构成后续演进的骨架。",
    "note": "",
    "items": [
     {
      "slug": "microkernel-event-taxonomy",
-     "gloss": "事件域定名：会话、agent、能力各自成类"
+     "gloss": "事件域定名：会话、agent、能力三类"
     },
     {
      "slug": "event-sourced-sessions",
-     "gloss": "会话为 append-only 事件日志，可重建模型可见内容"
+     "gloss": "会话即 append-only 事件日志，模型可见的内容必须能从日志重建"
     },
     {
      "slug": "capability-seams",
-     "gloss": "能力缝以服务定义、提供方、消费方角色构成"
+     "gloss": "Service Definition / Provider / Consumer 三角色构成可替换能力"
     },
     {
      "slug": "session-persistence",
-     "gloss": "会话持久化作为基于 SessionEvent 的抽象服务"
+     "gloss": "会话持久化的存储与世代策略"
     },
     {
      "slug": "turn-enclosure-invariant",
-     "gloss": "所有会话事件必须落在某个轮次之内"
+     "gloss": "所有会话事件必须落在某个 turn 之内"
     },
     {
      "slug": "agent-lifecycle-and-ownership-contracts",
@@ -77,27 +77,19 @@
     },
     {
      "slug": "package-hierarchy",
-     "gloss": "packages/ 目录结构的原始决策"
-    },
-    {
-     "slug": "session-surface",
-     "gloss": "会话 surface 为事件日志上的有序投影"
-    },
-    {
-     "slug": "event-domain-semantics",
-     "gloss": "事件域语义：会话是事实日志，agent 是实时事件通道"
+     "gloss": "packages/ 两级目录的原始决策（9 月曾按依赖聚类重构）"
     }
    ]
   },
   {
    "key": "2026-07",
    "name": "铺开能力缝",
-   "para": "能力缝复制到 LSP、子进程、后台任务与目录选择器。模型侧完成按提供方路由的适配器、协作式取消与超时策略；GUI 分层与 RPC 协议、Web 客户端架构、TUI 交互都在这一月成型；会话日志改为 zstd 压缩 JSONL 落盘。",
+   "para": "能力缝复制到 LSP、子进程、后台任务与目录选择器。模型侧完成按提供方路由的适配器、协作式取消与超时策略；GUI 分层与 RPC 协议、Web 客户端架构与 TUI 都在这一月定型。会话日志落盘改为 zstd 压缩的 JSONL，请求可从日志重建；同时落地单文件可执行 SDK 运行时与客户端插件装载。",
    "note": "",
    "items": [
     {
      "slug": "provider-routed-llm-adapters",
-     "gloss": "按提供方路由的模型适配器注册"
+     "gloss": "按 provider 路由的模型适配器注册"
     },
     {
      "slug": "lsp-capability-seam",
@@ -112,16 +104,12 @@
      "gloss": "后台任务注册表"
     },
     {
-     "slug": "directory-picker-capability-seam",
-     "gloss": "目录选择能力缝"
-    },
-    {
      "slug": "gui-layering-and-rpc-protocol",
-     "gloss": "GUI 分层与 RPC 协议"
+     "gloss": "GUI 分层与 RPC 协议分层"
     },
     {
      "slug": "gui-web-client-architecture",
-     "gloss": "Web 客户端整体架构"
+     "gloss": "Web 客户端的整体架构"
     },
     {
      "slug": "zstandard-jsonl-session-logs",
@@ -135,8 +123,8 @@
   },
   {
    "key": "2026-08",
-   "name": "产品化交付",
-   "para": "重心从代码转向交付物：profile 与 bundle 的组合机制、单一 dsh 启动器、Electron 桌面打包、Python SDK 复用 dsh profile 运行时、sdk-minimal 独立 profile。数据层同步硬化：会话日志引入版本机制，发布格式的相邻迁移链确立「已提交世代永不改名或删除」的规则。安全侧补上浏览器 token 认证；「code-mode」更名 PTC。",
+   "name": "产品化阶段",
+   "para": "重心转向交付物：profile 与 bundle 的组合机制、单一 dsh 启动器、Electron 桌面打包、Python SDK 复用 dsh profile 运行时、sdk-minimal 独立 profile。数据层同步硬化：会话日志引入版本机制，发布的相邻迁移链确立已提交世代永不改名或删除的规则。安全侧补上浏览器 token 认证，code-mode 更名 PTC。",
    "note": "",
    "items": [
     {
@@ -145,7 +133,7 @@
     },
     {
      "slug": "single-dsh-application-launcher",
-     "gloss": "所有受支持的 Node 应用只经 dsh profile 启动"
+     "gloss": "受支持的 Node 应用只经 dsh profile 启动"
     },
     {
      "slug": "electron-desktop-packaging-and-updates",
@@ -157,7 +145,7 @@
     },
     {
      "slug": "standalone-sdk-minimal-profile",
-     "gloss": "sdk-minimal：一个 bundle 拥有完整显式树"
+     "gloss": "sdk-minimal 独立 profile"
     },
     {
      "slug": "session-log-version-mechanism",
@@ -180,8 +168,8 @@
   {
    "key": "2026-09",
    "name": "发布冲刺",
-   "para": "",
-   "note": "本月进行了封存大扫除，归档库的绝大部分入库冻结。",
+   "para": "发布冲刺月：桌面应用连续加固，捆绑运行时与外部插件共存，欢迎窗口与文档预览就绪，Windows 安装器成形；插件生态同步成型，Web 侧栏管理、安装 registry 与声明式 agent preset 各就其位；会话信封演进到 v3，工具调用拆为准备、派发、结果三阶段，定时消息有了统一的事件投递框架。",
+   "note": "本月进行过两次封存大扫除：9 月 4 日冻结 99 篇，9 月 30 日冻结 59 篇，归档库的绝大部分在这两天集中入库。",
    "items": [
     {
      "slug": "v3-canonical-session-envelopes",
@@ -216,24 +204,12 @@
   {
    "key": "2026-10",
    "name": "活跃前沿",
-   "para": "骨架稳定后，决策转向增量特性与收尾：CUA 共享原生助手与连续悬停、PTC 沙箱持久化与策略清理、会话分叉独立于创建者、DeepSeek 官方模型目录跟随官方列表、WebSocket 启用压缩。同时补上插件身份兼容、存储凭据优先、无头环境认证与共享代理根指令等边界。当月决策均保持现行。",
+   "para": "骨架稳定后，决策转向增量特性与收尾：计算机操作（CUA）的对象 API 与应用授权、PTC 沙箱持久化、会话分叉语义修正、DeepSeek 官方模型目录、WebSocket 压缩。决策还覆盖插件生命周期、远程访问授权、会话投影概要、消息节点工厂等方面。当月状态包含现行与仅远端。",
    "note": "",
    "items": [
     {
      "slug": "persistent-ptc-sandbox",
      "gloss": "PTC 运行时的持久沙箱"
-    },
-    {
-     "slug": "ptc-owned-policy-cleanup",
-     "gloss": "PTC 自行等待策略变化后清理"
-    },
-    {
-     "slug": "cua-shared-native-helper",
-     "gloss": "共享 CUA 进程按 Agent 作用域管理状态"
-    },
-    {
-     "slug": "web-desktop-plugin-identity-compatibility",
-     "gloss": "实验能力整合中保留 Web 与 Desktop 插件身份"
     },
     {
      "slug": "independent-session-forks",
@@ -249,27 +225,23 @@
     },
     {
      "slug": "websocket-permessage-deflate",
-     "gloss": "WebSocket 连接启用 permessage-deflate 压缩"
+     "gloss": "WebSocket 连接采用压缩"
+    },
+    {
+     "slug": "cua-shared-native-helper",
+     "gloss": "共享原生 CUA 进程与代理级状态"
     }
    ]
   }
  ],
  "regions": [
   {
-   "name": "插件框架底座",
-   "desc": "插件框架是整套应用的底座。插件向共享上下文贡献服务、类型化事件与可撤销 effect，没有特权核心，agent 循环本身也是插件。工具管线、驱动 turn、ctx.tools 注册表、插件宿主运行时实例都立在这一层，事件域、能力 seam 与作用域存储由其承载。",
+   "name": "底座初成",
+   "desc": "dsh 的底座：插件向共享上下文贡献服务、类型化事件与可撤销 effect，没有特权核心，agent 循环本身也是插件。工具管线、驱动 turn、ctx.tools 注册表都立在这一层。事件域按会话、agent、能力三类定名，事件语义区分事实日志与实时通道；结构化错误与运行时参数校验划出边界。自定义 schema DSL 描述工具契约，工具 schema 进入提示词组装。agent 作为注册作用域，共享存储按作用域分层，卸载阶梯归消费方，运行树可检视，profile 内的插件共享宿主运行时实例。",
    "items": [
     {
      "slug": "microkernel-event-taxonomy",
      "gloss": "事件域定名：会话、agent、能力三类"
-    },
-    {
-     "slug": "event-domain-semantics",
-     "gloss": "三类事件域语义定型"
-    },
-    {
-     "slug": "capability-seams",
-     "gloss": "服务定义、提供方与消费方角色"
     },
     {
      "slug": "structured-error-taxonomy",
@@ -286,6 +258,10 @@
     {
      "slug": "tool-schemas-in-prompt-assembly",
      "gloss": "工具 Schema 进提示词组装"
+    },
+    {
+     "slug": "event-domain-semantics",
+     "gloss": "三类事件域语义定型"
     },
     {
      "slug": "agent-scope-contexts",
@@ -311,7 +287,7 @@
   },
   {
    "name": "分层装配",
-   "desc": "一个运行中的 dsh 是启动时按有序分层组合出来的插件树：profile 列出叠放的 bundle，bundle 携带配置行与代码，patch 链可以替换任何一行；web、headless、sdk、sdk-minimal、acp 五个内置 profile 共享 dsh-base 底层。启动统一经 dsh profile 完成，解析按不可变代际推进，实时配置归 profile 持有。官方按需 bundle 只被发现，不安装运行时。",
+   "desc": "运行中的 dsh 是启动时按有序分层组合出的插件树：profile 列出叠放的 bundle，bundle 携带配置行与代码，patch 链可替换任何一行；内置 profile 共享 dsh-base 底层。配置来源有统一顺序，profile 解析按不可变代际进行，实时配置由所属 profile 持有；包操作会刷新运行时解析并使清单失效。",
    "items": [
     {
      "slug": "package-hierarchy",
@@ -364,8 +340,8 @@
    ]
   },
   {
-   "name": "会话日志",
-   "desc": "会话日志以 append-only 事件流为唯一事实源：模型可见内容必须已记录日志，派生消息、回放、fork 与历史迁移全部从日志推导。持久化从基于 SessionEvent 的抽象服务演进出 zstd 压缩的 JSONL 布局与打包分片行。日志版本机制以单调整数与升级器链驱动迁移，经 v2 内嵌 Assistant 流、v3 规范信封到 v4 原生读校验。发布后的格式通过有状态流式 Stage 迁移，历史会话在写入发布前提供只读迁移结果；句柄式持久化与独立 fork 稳固边界。",
+   "name": "Session 日志",
+   "desc": "会话日志是 append-only 事件流，也是唯一事实源：模型可见性等价于已记录日志；派生消息、回放、fork、迁移全部从日志推导，已提交的世代永不改名或删除。该区域的演进几乎就是一部格式版本史——从 JSONL 落盘与打包 chunk 行，到内嵌 Assistant 流、规范信封与读取校验，每一步通过有状态迁移链向前推进。",
    "items": [
     {
      "slug": "event-sourced-sessions",
@@ -418,8 +394,8 @@
    ]
   },
   {
-   "name": "能力接缝",
-   "desc": "能力接缝将外部能力拆为服务定义、提供方与消费方三种角色，换一个 provider 即整体替换该能力。文件系统与子进程共享同一执行世界，可整体指向远程沙箱；LLM 侧以双适配器起步并按 provider 路由。工具调用按 callId 经历准备、派发与结果三阶段；后台任务、LSP 等各有缝位。PTC 运行时沙箱化，支持持久状态，computer-use 与 browser-use 均以 provider 注册。",
+   "name": "Capability Seam",
+   "desc": "Capability Seam 将一项能力拆成 Service Definition、Service Provider、Consumer 三角色。文件系统与子进程共享同一执行世界，切换 provider 即整体替换能力实现；模型侧由双 LLM 适配器起步，按 provider 路由适配器。LSP、后台任务、目录选择等均有独立缝。工具调用按 callId 分准备、派发与结果三阶段；PTC 运行时沙箱化并持久化，计算机与浏览器操作也以 provider 注册。",
    "items": [
     {
      "slug": "capability-seams",

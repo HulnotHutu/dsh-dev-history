@@ -14,6 +14,9 @@
   --apply：不再调 AI，把已评审的草稿写入 content/narrative.json（保留 .bak）。
 """
 import json
+import os
+import urllib.error
+import urllib.request
 import re
 import subprocess
 import sys
@@ -35,21 +38,52 @@ RULES = """硬约束：
 3. note：仅当给定"大扫除提示"时保留并润色，否则为空字符串。
 4. desc/para 中不要出现 markdown 标记。"""
 
+# DashScope 兼容模式 + response_format: json_object（结构化输出）。
+# 约束：messages 里须含 "JSON" 字样；不设 max_tokens（防 JSON 截断）；模型不支持时降级重试。
+ENDPOINT = 'https://llm-p317n4rywd1joyu3.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions'
+MODEL = 'deepseek-v4-flash-0731'
+_KEY_CACHE = {}
+
+
+def api_key():
+    if not _KEY_CACHE.get('k'):
+        if os.environ.get('DASHSCOPE_API_KEY'):
+            _KEY_CACHE['k'] = os.environ['DASHSCOPE_API_KEY']
+        else:
+            r = subprocess.run(['bash', '-c', 'source ~/.zshrc >/dev/null 2>&1; echo "$DASHSCOPE_API_KEY"'],
+                               capture_output=True, text=True, check=True)
+            _KEY_CACHE['k'] = r.stdout.strip()
+    return _KEY_CACHE['k']
+
+
+def chat(messages, structured):
+    body = {'model': MODEL, 'messages': messages}
+    if structured:
+        body['response_format'] = {'type': 'json_object'}
+    req = urllib.request.Request(ENDPOINT, data=json.dumps(body).encode(),
+                                 headers={'Authorization': 'Bearer ' + api_key(),
+                                          'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=240) as r:
+        resp = json.loads(r.read())
+    return resp['choices'][0]['message']['content']
+
 
 def call_ai(task, payload):
-    """调 aihelpme.sh：任务指令作 argv，数据走 stdin。"""
-    prompt = RULES + '\n\n' + payload
-    r = subprocess.run(
-        ['bash', '-c', 'source ~/.zshrc >/dev/null 2>&1; exec "$HOME/scripts/aihelpme.sh" "$1"', 'bash', task],
-        input=prompt, text=True, capture_output=True, timeout=240)
-    if r.returncode != 0:
-        raise RuntimeError(f'AI 调用失败: {r.stderr.strip()[:200]}')
-    text = r.stdout.strip()
+    """结构化输出调 DashScope（json_object 保证合法 JSON）；不支持 response_format 的模型自动降级为普通调用再剥壳。"""
+    messages = [{'role': 'system', 'content': '只输出 JSON。'},
+                {'role': 'user', 'content': RULES + '\n\n' + task + '\n\n' + payload}]
+    try:
+        return json.loads(chat(messages, structured=True))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors='replace')[:200]
+        if 'response_format' not in detail and e.code != 400:
+            raise
+        print('warn: 端点不支持 response_format，降级为普通调用', file=sys.stderr)
+    text = chat(messages, structured=False).strip()
     fence = re.search(r'```(?:json)?\s*(\{[\s\S]*\})\s*```', text)
     if fence:
         text = fence.group(1)
-    start = text.find('{')
-    end = text.rfind('}')
+    start, end = text.find('{'), text.rfind('}')
     if start == -1 or end == -1:
         raise RuntimeError('AI 输出中没有 JSON：' + text[:200])
     return json.loads(text[start:end + 1])
