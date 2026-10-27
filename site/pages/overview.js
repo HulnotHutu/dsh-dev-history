@@ -17,11 +17,10 @@
         '本站把其中 architecture 类（关于所发布源码的结构决策）的 ' + M.total + ' 篇按时间排成一本可检索的账簿，' +
         '覆盖 ' + M.first + '（建仓次日）到 ' + M.last + '。</p>' +
         '<div class="guide">' +
-        '<p class="small"><i class="i k">●</i> <b>现行</b>——决策已实施，正在指导当前代码（' + M.active +
-        ' 篇，其中 ' + M.remoteOnly + ' 篇还没同步到本地克隆）。</p>' +
+        '<p class="small"><i class="i k">●</i> <b>现行</b>——决策已实施，正在指导当前代码（' + M.active + ' 篇）。</p>' +
         '<p class="small"><i class="a k">◦</i> <b>已封存</b>——决策完整落地后移入归档库，永久冻结，' +
         '不再是现行行为的权威（' + M.archived + ' 篇）。</p>' +
-        '<p class="small"><i class="r k">◇</i> <b>仅远端</b>——本地克隆落后远端，<code>git pull</code> 后并入本地。</p>' +
+        '<p class="small"><i class="r k">◇</i> <b>仅远端</b>——提取时只存在于远端 master 的笔记（' + M.remoteOnly + ' 篇）。</p>' +
         '</div>' +
         '<p class="small muted">推荐读法：先在<a href="#/map">架构</a>页看整体结构（嵌入整图，按图上四个区域铺开各自演进），' +
         '再到<a href="#/ledger">账簿</a>按标题或文件名搜索，每条都能展开看完整段落与仓库路径。</p>' +

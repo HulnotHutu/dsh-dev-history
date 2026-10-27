@@ -25,17 +25,16 @@
         '</dl>' +
         '<h2>数据口径</h2>' +
         '<p>全库英文原件：已封存 ' + M.allClasses.archived + ' 篇，现行 ' + M.allClasses.active +
-        ' 篇（本地口径）。本站收录其中 architecture 类：</p>' +
+        ' 篇。本站收录其中 architecture 类（提取自 ' + M.remoteHead + ' 的仓库状态）：</p>' +
         '<table class="class-table">' +
         '<tr><th scope="col">状态</th><th scope="col">篇数</th><th scope="col">说明</th></tr>' +
         '<tr><td>已封存</td><td class="num">' + M.archived + '</td><td>两次大扫除入库：' +
         M.sweeps.map(function (s) { return s.date.slice(5) + ' 封 ' + s.count + ' 篇'; }).join('、') + '</td></tr>' +
-        '<tr><td>现行（本地）</td><td class="num">' + (M.active - M.remoteOnly) + '</td><td>截至本地克隆的 ' + M.localImplLatest + '</td></tr>' +
-        '<tr><td>现行（仅远端）</td><td class="num">' + M.remoteOnly + '</td><td>本地尚未 pull 的 41 篇</td></tr>' +
-        '<tr><td>合计</td><td class="num">' + M.total + '</td><td>截至远端 master ' + M.remoteHead + '</td></tr>' +
+        '<tr><td>现行（提取自本地工作区）</td><td class="num">' + (M.active - M.remoteOnly) + '</td><td>现行笔记提取至 ' + M.localImplLatest + '</td></tr>' +
+        '<tr><td>现行（提取自远端）</td><td class="num">' + M.remoteOnly + '</td><td>提取时仅存在于远端 master 的笔记</td></tr>' +
+        '<tr><td>合计</td><td class="num">' + M.total + '</td><td>其中 ' + M.zhCount + ' 篇有中文全文</td></tr>' +
         '</table>' +
-        '<p class="small muted">本地克隆落后远端 2,529 个提交。执行 <code>git pull</code> 后，' +
-        '「仅远端」的笔记会并入本地；届时重跑数据脚本即可更新本站。</p>' +
+        '<p class="small muted">中文全文来自各笔记的 <code>.zh.md</code> 维护副本；数据由仓库内的 <code>tools/extract.py</code> 与 <code>tools/build.py</code> 生成，更新方式见仓库 README。</p>' +
         '</section>';
     }
   });

@@ -60,7 +60,7 @@
     },
     {
       key: '2026-10',
-      para: '骨架稳定后，决策转向增量特性与收尾：计算机操作（CUA）的对象 API 与应用授权、PTC 沙箱持久化、会话分叉语义修正、DeepSeek 官方模型目录、WebSocket 压缩。十月 42 篇全部处于现行状态，其中 34 篇尚未同步到本地克隆。',
+      para: '骨架稳定后，决策转向增量特性与收尾：计算机操作（CUA）的对象 API 与应用授权、PTC 沙箱持久化、会话分叉语义修正、DeepSeek 官方模型目录、WebSocket 压缩。当月笔记全部处于现行状态。',
       keys: [
         ['persistent-ptc-sandbox', 'PTC 运行时的持久沙箱'],
         ['independent-session-forks', '普通分叉不再携带创建者关系，与子代理明确区分'],
