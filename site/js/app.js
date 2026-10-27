@@ -53,16 +53,35 @@
   function setLang(v) {
     try { localStorage.setItem('arch-lang', v); } catch (e) { /* 私有模式下忽略 */ }
   }
-  /* 段落数组 -> <p> 串（调用方负责外层包裹） */
-  function para(arr) {
-    return (arr || []).map(esc).join('</p><p class="pp">');
+  function lang() {
+    try { return localStorage.getItem('arch-lang') || 'zh'; } catch (e) { return 'zh'; }
+  }
+  function setLang(v) {
+    try { localStorage.setItem('arch-lang', v); } catch (e) { /* 私有模式下忽略 */ }
+  }
+  /* Markdown -> HTML；marked 缺席时退化为转义文本 */
+  var BOLD_BEFORE_CJK = /\*\*(?=[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af])/g;
+  function renderMarkdown(md) {
+    if (!md) return '';
+    // CommonMark 的 right-flanking 规则会让「**……。**后接汉字」的粗体失效；
+    // 在紧邻 CJK 的 ** 前插入零宽空格（不可见），使闭合定界符"前面不是标点"而成立
+    md = md.replace(BOLD_BEFORE_CJK, '\u200B**');
+    if (typeof window.marked === 'object' && typeof window.marked.parse === 'function') {
+      try { return window.marked.parse(md); } catch (e) { /* 落到下方纯文本 */ }
+    }
+    return '<p>' + esc(md) + '</p>';
   }
 
   var api = {
     data: D,
     zh: window.DSH_ARCH_ZH || {},
     esc: esc,
-    para: para,
+    md: renderMarkdown,
+    slugSet: (function () {
+      var s = {};
+      D.notes.forEach(function (x) { s[x.n] = 1; });
+      return s;
+    })(),
     byMonth: byMonth,
     monthKey: monthKey,
     legendHtml: legendHtml,

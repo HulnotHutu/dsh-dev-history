@@ -310,9 +310,53 @@ code { font-family: var(--mono); font-size: .9em; background: transparent; paddi
 
 .rowd .detail { padding: 4px 8px 12px; }
 .rowd .detail .sec { margin: 0 0 9px; font-size: 13.5px; line-height: 1.75; }
-.rowd .detail .pp { margin: 0 0 7px; }
-.rowd .detail .pp:last-child { margin-bottom: 0; }
-.rowd .detail .alts .pp { margin: 2px 0 0; }
+/* Markdown 渲染正文 */
+.rowd .detail .md { line-height: 1.8; }
+.rowd .detail .md > :first-child { margin-top: 0; }
+.rowd .detail .md > :last-child { margin-bottom: 0; }
+.rowd .detail .md h3, .rowd .detail .md h4 { font-size: 13.5px; font-weight: 500; margin: 10px 0 4px; }
+.rowd .detail .md p { margin: 6px 0; }
+.rowd .detail .md ul, .rowd .detail .md ol { margin: 6px 0; padding-left: 20px; }
+.rowd .detail .md li { margin: 3px 0; }
+.rowd .detail .md code {
+  font-family: var(--mono);
+  font-size: .92em;
+  background: var(--hover);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+.rowd .detail .md pre {
+  background: var(--hover);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 8px 12px;
+  overflow-x: auto;
+}
+.rowd .detail .md pre code { background: transparent; padding: 0; }
+.rowd .detail .md table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.rowd .detail .md th, .rowd .detail .md td {
+  border: 1px solid var(--line);
+  padding: 3px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.rowd .detail .md th { background: var(--hover); font-weight: 500; }
+.rowd .detail .md blockquote {
+  margin: 6px 0;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--line);
+  color: var(--ink-2);
+}
+.rowd .detail .md hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+.rowd .detail .md a { color: var(--seal); }
+.rowd .detail .md code.md-ref { color: var(--ink-2); background: transparent; padding: 0; }
 .rowd .detail .lbl {
   display: block;
   font-weight: 500;

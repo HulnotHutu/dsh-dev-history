@@ -15,8 +15,17 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
-ROOT = subprocess.run(['git', 'rev-parse', '--show-toplevel'], cwd=Path(__file__).parent,
-                      capture_output=True, text=True, check=True).stdout.strip()
+HERE = Path(__file__).resolve().parents[1]  # dsh-dev-history/
+# 本项目通常位于 monorepo 根下；项目自身 git init 后 rev-parse 会指向项目，故向上探测 monorepo 根
+ROOT = None
+_probe = HERE.parent
+while _probe != _probe.parent:
+    if (_probe / '.agents' / 'notes' / 'archived').is_dir():
+        ROOT = _probe
+        break
+    _probe = _probe.parent
+if ROOT is None:
+    sys.exit('未找到包含 .agents/notes/archived 的 monorepo 根')
 NOTES = Path(ROOT) / '.agents' / 'notes'
 OUT = Path(__file__).resolve().parents[1] / 'data' / 'arch-notes.json'
 REMOTE = 'origin/master'
@@ -35,56 +44,11 @@ def git(args, check=True):
 
 def get_section(text, names):
     m = re.search(r'^## (?:' + '|'.join(names) + r')\s*$(.*?)(?=^## |\Z)', text, re.M | re.S)
-    return m.group(1) if m else ''
-
-
-def clean_line(ln):
-    return re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', ln)
-
-
-def paragraphs(sec):
-    """章节正文 -> 段落数组；表格行并为一行（┃ 分隔），列表项保留 · 前缀。"""
-    paras, cur = [], []
-    for ln in sec.split('\n'):
-        s = ln.strip()
-        if s.startswith('|'):
-            cells = [c.strip() for c in s.strip('|').split('|')]
-            if all(re.fullmatch(r':?-{2,}:?', c or '--') for c in cells):
-                continue
-            if cur:
-                paras.append(re.sub(r'\s+', ' ', ' '.join(cur)).strip()); cur = []
-            paras.append(' ┃ '.join(clean_line(c) for c in cells))
-            continue
-        if cur:
-            paras.append(re.sub(r'\s+', ' ', ' '.join(cur)).strip()); cur = []
-        if not s or s.startswith(('#', '```', '<!--')):
-            continue
-        paras.append(clean_line(re.sub(r'^[-*]\s+', '· ', s)))
-    return [p for p in paras if p]
-
-
-def parse_alts(sec):
-    items, cur = [], None
-    for raw in sec.split('\n'):
-        s = raw.strip()
-        if not s or s.startswith(('<!--', '|', '```')):
-            continue
-        mh = re.match(r'^###\s+(?:Why not\s+|为什么不选?|为何不选?|为什么不用|为何不用)(.+?)[?？]?\s*$', s)
-        mb = re.match(r'^\*\*(.+?)\*\*[.:：—-]?\s*(.*)$', s)
-        if re.match(r'^###\s+', s):
-            cur = {'n': clean_line(mh.group(1) if mh else re.sub(r'^###\s+', '', s)).strip(), 'w': []}
-            items.append(cur)
-        elif mb and raw.lstrip().startswith('**'):
-            cur = {'n': clean_line(mb.group(1)).strip(), 'w': [clean_line(mb.group(2))] if mb.group(2) else []}
-            items.append(cur)
-        elif cur is not None:
-            t = clean_line(re.sub(r'^[-*]\s+', '', s))
-            if t:
-                cur['w'].append(t)
-    return [{'n': it['n'], 'w': paragraphs('\n'.join(it['w']))} for it in items]
+    return m.group(1).strip() if m else ''
 
 
 def parse(text):
+    """章节以原始 Markdown 返回（前端用 marked 渲染），不做任何清洗。"""
     title = re.search(r'^# Agent Note: (.+)$', text, re.M)
     ar = re.search(r'^Archived:\s*(\d{4}-\d{2}-\d{2})', text, re.M)
     outs = []
@@ -96,10 +60,10 @@ def parse(text):
     return {
         't': title.group(1).strip() if title else '',
         'ar': ar.group(1) if ar else '',
-        'p': paragraphs(get_section(text, ZH_HEADS['problem'])),
-        'dc': paragraphs(get_section(text, ZH_HEADS['decision'])),
-        'alt': parse_alts(get_section(text, ZH_HEADS['alts'])),
-        'cs': paragraphs(get_section(text, ZH_HEADS['conseq'])),
+        'p': get_section(text, ZH_HEADS['problem']),
+        'dc': get_section(text, ZH_HEADS['decision']),
+        'alt': get_section(text, ZH_HEADS['alts']),
+        'cs': get_section(text, ZH_HEADS['conseq']),
         'out': outs[:12],
     }
 
