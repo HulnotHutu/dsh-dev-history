@@ -26,6 +26,15 @@ content/narrative.json ───────────┴───────
 
 ## 数据口径
 
+**收录范围（刻意收窄为"决策"）**：站点只收录 `implemented/` + `archived/` 两个生命周期的 architecture 类——即已经做出并落地（或已封存）的结构性决策。**不收录**另外两个生命周期：
+
+- `proposed/`（约 41 篇）：正在评审中的提案，尚无结论，且数据形态不同（`## Proposal` / `## Acceptance criteria` / `## Risks` 章节而非 `## Decision`）；
+- `rejected/`（约 8 篇）：被否决且仍值得留存的记录——它们是"差点走错的路"的警示，按制度只在警示价值存续期间保留，之后会被删除。
+
+两者将来可作为独立维度加入站点（状态词表加"提案 / 已否决"两档，`tools/extract.py` 增加对应目录读取即可），当前版本明确不覆盖。
+
+其余口径：
+
 - 只计 `.agents/notes/{archived,implemented}/architecture/` 的**英文原件**；中文全文取自每篇笔记的 `.zh.md` 维护副本（双语对照契约）。
 - 远端 `origin/master` 上存在而本地缺失的笔记（◇ 标记）经 `git show` 补齐。
 - 动机/决策/备选/代价四个章节以**原始 Markdown 全文**提取，前端用内嵌的 [marked](https://github.com/markedjs/marked)（`site/js/vendor/`，35KB，无 CDN 依赖）渲染，保留标题层级、列表、表格与代码块。
