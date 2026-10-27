@@ -1,20 +1,15 @@
-/* 路由与共享渲染：hash 导航，按需注入各页面脚本 */
+/* 路由与共享渲染：hash 导航，按需注入各页面脚本。
+   页面内容全部来自结构化数据：window.DSH_ARCH（笔记）+ window.DSH_ARCH_ZH（中文）+ window.DSH_ARCH_CONTENT（content/narrative.md）。 */
 (function () {
   'use strict';
   var D = window.DSH_ARCH;
+  var C = window.DSH_ARCH_CONTENT || { site: {}, glossary: [], phases: [], regions: [] };
   var FILES = { overview: 'pages/overview.js', map: 'pages/map.js', ledger: 'pages/ledger.js', phases: 'pages/phases.js', about: 'pages/about.js' };
   var TITLES = { overview: '总览', map: '架构', ledger: '账簿', phases: '阶段', about: '体例' };
   var pages = {};
   var injected = {};
   var current = null;
 
-  var PHASES = {
-    '2026-06': ['立骨架', '微内核事件分类、事件溯源会话、能力缝、agent 生命周期当月定型，这套词汇沿用至今。'],
-    '2026-07': ['铺开能力缝', '能力缝复制到 LSP、subprocess、jobs；provider 路由的模型适配器，GUI、TUI 与 Web 客户端在这一月成型。'],
-    '2026-08': ['产品化', 'profile 与 bundle 组合、单一 dsh 启动器、Electron 桌面与 Python SDK；session 日志引入版本机制。'],
-    '2026-09': ['发布冲刺', '桌面加固、插件生态与 v3 规范信封；9-04 与 9-30 两次封存共 158 篇，历史笔记入库冻结。'],
-    '2026-10': ['活跃前沿', '骨架稳定，决策转向 CUA、持久 PTC、会话分叉与官方模型目录；当月笔记全部处于现行状态。']
-  };
   var MON = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
   var MARK = { a: '◦', i: '●', r: '◇' };
   var CLS = { a: 'a', i: 'i', r: 'r' };
@@ -39,19 +34,12 @@
       '<span><i class="a k">◦</i> 已封存（archived，永久冻结）</span>' +
       '<span><i class="r k">◇</i> 仅存在于远端</span></p>';
   }
-
   function refCounts() {
     var c = {};
     D.notes.forEach(function (x) {
       (x.out || []).forEach(function (s) { c[s] = (c[s] || 0) + 1; });
     });
     return c;
-  }
-  function lang() {
-    try { return localStorage.getItem('arch-lang') || 'zh'; } catch (e) { return 'zh'; }
-  }
-  function setLang(v) {
-    try { localStorage.setItem('arch-lang', v); } catch (e) { /* 私有模式下忽略 */ }
   }
   function lang() {
     try { return localStorage.getItem('arch-lang') || 'zh'; } catch (e) { return 'zh'; }
@@ -71,17 +59,28 @@
     }
     return '<p>' + esc(md) + '</p>';
   }
+  /* content 文案中的 {占位符} 以提取元数据填充 */
+  function fill(str) {
+    return String(str || '').replace(/\{(\w+)\}/g, function (_, k) {
+      return D.meta[k] !== undefined ? D.meta[k] : '';
+    });
+  }
+
+  var phaseMap = {};
+  C.phases.forEach(function (p) { phaseMap[p.key] = p; });
 
   var api = {
     data: D,
     zh: window.DSH_ARCH_ZH || {},
+    content: C,
+    site: C.site,
+    phasesList: C.phases,
+    phaseOf: function (k) { return phaseMap[k] || null; },
+    regions: C.regions,
+    glossary: C.glossary,
     esc: esc,
     md: renderMarkdown,
-    slugSet: (function () {
-      var s = {};
-      D.notes.forEach(function (x) { s[x.n] = 1; });
-      return s;
-    })(),
+    fill: fill,
     byMonth: byMonth,
     monthKey: monthKey,
     legendHtml: legendHtml,
@@ -89,7 +88,6 @@
     lang: lang,
     setLang: setLang,
     rerender: function () { if (current && pages[current]) paint(current); },
-    PHASES: PHASES,
     MON: MON,
     MARK: MARK,
     CLS: CLS,
@@ -137,6 +135,17 @@
       if (current === name) paint(name);
     }
   };
+  /* 骨架槽位：index.html 只留容器，文案由 content/narrative.md 填充 */
+  function fillSkeleton() {
+    var sub = document.getElementById('slot-subtitle');
+    if (sub) sub.textContent = C.site['副标题'] || '';
+    var foot = document.getElementById('slot-footer');
+    if (foot) {
+      foot.innerHTML = [C.site['页脚-1'], C.site['页脚-2']].map(fill).filter(Boolean)
+        .map(esc).join('<br>');
+    }
+  }
   window.addEventListener('hashchange', route);
+  fillSkeleton();
   route();
 })();

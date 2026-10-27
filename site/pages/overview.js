@@ -1,4 +1,4 @@
-/* 总览：这是什么、怎么读、节奏图、月份速览、开发的地基 */
+/* 总览：导语、怎么读、节奏图、逐月主题、开发的地基——文案来自 content/narrative.md */
 (function () {
   'use strict';
   window.DSH_ARCH.pages.register('overview', {
@@ -6,30 +6,28 @@
       var M = api.data.meta;
       var bm = api.byMonth();
       var strip = Object.keys(bm).sort().map(function (k) {
-        return '<a href="#/phases"><span class="m">' + api.monthKey(k) + ' · ' + api.PHASES[k][0] +
+        var ph = api.phaseOf(k) || { name: '', para: [] };
+        return '<a href="#/phases"><span class="m">' + api.monthKey(k) + ' · ' + ph.name +
           '</span><span class="c">' + bm[k].length + ' 篇</span>' +
-          '<span class="p">' + api.PHASES[k][1] + '</span></a>';
+          '<span class="p">' + ph.para.join('') + '</span></a>';
       }).join('');
       var sweepText = M.sweeps.map(function (s) { return s.date.slice(5) + ' 封 ' + s.count + ' 篇'; }).join('、');
       root.innerHTML =
         '<section>' +
-        '<p class="lede">DeepSeek Harness 仓库用「Agent Note」记录每个结构性设计决策：为什么要做、放弃了什么。' +
-        '本站把其中 architecture 类（关于所发布源码的结构决策）的 ' + M.total + ' 篇按时间排成一本可检索的账簿，' +
-        '覆盖 ' + M.first + '（建仓次日）到 ' + M.last + '。</p>' +
+        '<p class="lede">' + api.esc(api.fill(api.site['导语'])) + '</p>' +
         '<div class="guide">' +
-        '<p class="small"><i class="i k">●</i> <b>现行</b>——决策已实施，正在指导当前代码（' + M.active + ' 篇）。</p>' +
-        '<p class="small"><i class="a k">◦</i> <b>已封存</b>——决策完整落地后移入归档库，永久冻结，' +
-        '不再是现行行为的权威（' + M.archived + ' 篇）。</p>' +
-        '<p class="small"><i class="r k">◇</i> <b>仅远端</b>——提取时只存在于远端 master 的笔记（' + M.remoteOnly + ' 篇）。</p>' +
+        '<p class="small"><i class="i k">●</i> <b>现行</b>——' + api.esc(api.fill(api.site['指南-现行'])) + '</p>' +
+        '<p class="small"><i class="a k">◦</i> <b>已封存</b>——' + api.esc(api.fill(api.site['指南-已封存'])) + '</p>' +
+        '<p class="small"><i class="r k">◇</i> <b>仅远端</b>——' + api.esc(api.fill(api.site['指南-仅远端'])) + '</p>' +
         '</div>' +
-        '<p class="small muted">推荐读法：先在<a href="#/map">架构</a>页看整体结构（嵌入整图，按图上四个区域铺开各自演进），' +
-        '再到<a href="#/ledger">账簿</a>按标题或文件名搜索，每条都能展开看完整段落与仓库路径。</p>' +
+        '<p class="small muted">推荐读法：' + api.esc(api.site['推荐读法'] || '') + '</p>' +
         '</section>' +
         '<section><h2>提出与封存的节奏</h2>' +
-        '<p class="small muted">每个决策记两笔：提出（写成笔记）与封存（移入归档库）。按自然周统计。</p>' +
+        '<p class="small muted">' + api.esc(api.site['节奏图说明'] || '') +
+        (M.sweeps.length ? '封存高峰：' + api.esc(sweepText) + '。' : '') + '</p>' +
         '<div id="cadence" class="cadence"></div></section>' +
         '<section><h2>逐月主题</h2>' +
-        '<p class="small muted">逐月的主题与篇数；点击进入「阶段」页看叙事与承重决策。</p>' +
+        '<p class="small muted">' + api.esc(api.site['逐月说明'] || '') + '</p>' +
         '<div class="month-strip">' + strip + '</div></section>' +
         foundationsSection(api);
       drawCadence(document.getElementById('cadence'), api);
@@ -48,8 +46,7 @@
         '</b> ' + api.esc(titles[slug] || slug) + '</a></li>';
     }).join('');
     return '<section><h2>开发的地基</h2>' +
-      '<p class="small muted">被后续决策正文引用最多的笔记——后来的取舍大多站在它们之上。' +
-      '计数来自这 ' + api.data.meta.total + ' 篇笔记的交叉引用，点击查看该决策。</p>' +
+      '<p class="small muted">' + api.esc(api.fill(api.site['地基说明'] || '')) + '</p>' +
       '<ol class="founds">' + items + '</ol></section>';
   }
 

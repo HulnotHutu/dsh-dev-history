@@ -23,12 +23,13 @@
       var groups = [];
       Object.keys(bm).sort().forEach(function (k, idx) {
         var det = document.createElement('details');
+        var ph = api.phaseOf(k) || { name: '', para: [] };
         if (idx === 0) det.open = true;
         det.innerHTML = '<summary><span class="vol">' + api.MON[idx] + '</span>' +
           '<span class="m">' + api.monthKey(k) + '</span>' +
-          '<span class="phase">' + api.PHASES[k][0] + '</span>' +
+          '<span class="phase">' + ph.name + '</span>' +
           '<span class="count">' + bm[k].length + ' 篇</span></summary>' +
-          '<p class="phase-note">' + api.PHASES[k][1] + '</p>';
+          '<p class="phase-note">' + ph.para.join('') + '</p>';
         var rows = document.createElement('div');
         rows.className = 'rows';
         bm[k].forEach(function (x) { rows.appendChild(rowEl(x, api, counts, lang)); });
