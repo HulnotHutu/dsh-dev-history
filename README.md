@@ -1,14 +1,16 @@
 # dsh-dev-history · DeepSeek Harness 演化史
 
-展示 [DeepSeek Harness](../)（`dsh`）如何演化的独立小项目。核心是一条**markdown → 结构化数据 → 静态骨架**的工作流：仓库 `.agents/notes/` 里 architecture 类 Agent Notes（结构性设计决策，2026-06-11 建仓次日起）是元数据，`content/narrative.json` 与 `content/static.json`（骨架固定文本、导航标签）是站点的文本元数据（逐月叙事、架构区域、精选决策注释、站点文案），构建脚本把两者编译为结构化 JS；`site/index.html` 只是骨架，运行时填充。站点以 archify 生成的[整体架构图](site/dsh-architecture.html)为枢纽，按架构区域铺开每块能力的决策史。
+展示 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）如何从一块“木板（Cordis 插件框架）”演化的一座“航母（DeepSeek Harness）”。
 
-```
-dsh 笔记 (.agents/notes/**.md) ─┐
-                                ├─ tools/extract.py ── data/arch-notes.json ─┐
-content/narrative.json ───────────┴──────────────── tools/build.py ──────────┴─ site/js/*.js（结构化数据）
-                                                                  │
-                                              site/index.html（骨架）← 运行时按路由填充
-```
+代码告诉你系统是什么样，agent notes 保留了为什么长这样、放弃了什么。有什么需求？如何/怎么解决这个需求？为什么这样解决？这样解决之后得到/失去了什么？
+
+本项是一条**markdown → 结构化数据 → 静态骨架**的工作流：
+仓库 `.agents/notes/` 里 architecture 类 Agent Notes（结构性设计决策，2026-06-11 建仓次日起）是直接从 **DeepSeek Harness** 拉取的元数据，`content/narrative.json` 与 `content/static.json`（骨架固定文本、导航标签）是站点的文本元数据（逐月叙事、架构区域、精选决策注释、站点文案），构建脚本把两者编译为结构化 JS；`site/index.html` 只是骨架，运行时填充。
+看这群人是如何一步步将 dsh 搭建组装发布。
+
+> 站点以 archify 生成的[整体架构图](site/dsh-architecture.html)为枢纽，按架构区域铺开每块能力的决策史。
+> 一个由 AI 深度参与建成的 agent harness（DeepSeek 官方），一个由 AI 深度参与建成的研究工具——用 AI 研究 AI 时代的工程史。
+
 
 ## 站点（site/）
 
@@ -22,7 +24,7 @@ content/narrative.json ───────────┴───────
 | 阶段 | 逐月叙事与承重决策 |
 | 体例 | Agent Notes 制度说明与数据口径 |
 
-状态标记：● 现行（implemented）· ◦ 已封存（archived，永久冻结）· ◇ 仅存在于远端（本地未同步）。
+> 状态标记：● 现行（implemented）· ◦ 已封存（archived，永久冻结）· ◇ 仅存在于远端（本地未同步）。
 
 ## 数据口径
 
@@ -32,6 +34,8 @@ content/narrative.json ───────────┴───────
 - `rejected/`：被否决且仍值得留存的记录——它们是"差点走错的路"的警示，按制度只在警示价值存续期间保留，之后会被删除；
 
 两者将来可作为独立维度加入站点（状态词表加"提案 / 已否决"两档，`tools/extract.py` 增加对应目录读取即可），当前版本明确不覆盖。
+
+虽然结合 proposed/ 能看到“还没有结论”的提案，看到它对未来的展望；rejected 得出的结论，但结论是“不做”的考量；但是我觉得只看“决策”能抓住整个 dsh 发展的主干，~~或许在后续引入 proposed/rejected 两个维度~~。
 
 其余口径：
 
@@ -49,18 +53,22 @@ python3 tools/extract.py    # 仓库 -> data/arch-notes.json（可重复运行�
 python3 tools/build.py      # data + content -> site/js/{data,data.zh,content,static}.js（刷新 ?v=）
 ```
 
-依赖：**站点运行零依赖**（无框架、无 CDN、无字体请求，可离线打开）；构建与更新仅需 Python 3 标准库 + git。`tools/extract.py` 在远端不可达时自动退化为仅本地口径。
+依赖：**站点运行零依赖**（无框架、无 CDN、无字体请求，可离线打开）；构建与更新仅需 Python 3 标准库 + git。
+`tools/extract.py` 在远端不可达时自动退化为仅本地口径。
 
 ## 部署到 GitHub Pages
 
-`site/` 即部署单元（纯静态、相对路径、子路径可用）。两种方式与注意事项见 [deploy/DEPLOY.md](deploy/DEPLOY.md)：Actions 工作流（`deploy/github-pages.yml`，复制进发布仓库）或 gh-pages 分支一键脚本（`deploy/gh-pages.sh`）。`tools/` 与 `data/` 是构建期工具，不需要上传。
+`site/` 即部署单元（纯静态、相对路径、子路径可用）。
+两种方式与注意事项见 [deploy/DEPLOY.md](deploy/DEPLOY.md)：
+1. Actions 工作流（`deploy/github-pages.yml`，复制进发布仓库）
+2.  gh-pages 分支一键脚本（`deploy/gh-pages.sh`）。
 
 ## 目录
 
 ```
 dsh-dev-history/
 ├─ README.md            本文件
-├─ dsh-dev-history-workflow.html  构建发布工作流图（archify 生成，仅仓库留存，不在站点前端展示）
+├─ dsh-dev-history-workflow.html  构建发布工作流图（archify 生成，仅仓库留存）
 ├─ tools/extract.py     提取：仓库笔记 -> data/arch-notes.json（含周桶与统计）
 ├─ tools/build.py       组装：data + content/narrative.json -> site/js/*.js
 ├─ content/{narrative,static}.json 文本元数据（编辑内容 + 骨架固定文本与导航）
@@ -69,6 +77,6 @@ dsh-dev-history/
 └─ site/                静态站点（index.html + css + js + pages + 架构整图），即部署单元
 ```
 
-## 嵌入的架构图
+## 架构图
 
 `site/dsh-architecture.html` 由 [archify](../../.archify/architecture-dsh-overview-20261027-050451/) 生成（源文件在仓库 `.archify/` 下），复制进站点以支持 file:// 内嵌；如需更新，重新导出后覆盖该文件。
