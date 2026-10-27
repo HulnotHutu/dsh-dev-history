@@ -1,4 +1,4 @@
-/* 体例：Agent Notes 体系说明（来自 content/narrative.md「体例」章节）与数据口径（来自提取元数据） */
+/* 体例：Agent Notes 体系说明（来自 content/narrative.json「体例」章节）与数据口径（来自提取元数据） */
 (function () {
   'use strict';
   window.DSH_ARCH.pages.register('about', {

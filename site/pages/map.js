@@ -1,4 +1,4 @@
-/* 架构：围绕整图组织演进——区域与精选决策来自 content/narrative.md 的「架构区域」章节 */
+/* 架构：围绕整图组织演进——区域与精选决策来自 content/narrative.json 的「架构区域」章节 */
 (function () {
   'use strict';
   var CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
@@ -16,7 +16,7 @@
         '</figure>';
       html += api.regions.map(function (r, idx) {
         return '<section class="region"><h2><span class="vol">' + CN[idx] + '</span> ' + r.name + '</h2>' +
-          '<p class="small muted">' + r.desc.join('') + '</p>' +
+          '<p class="small muted">' + r.desc + '</p>' +
           '<ul class="keys">' + r.items.map(function (it) {
             var note = bySlug[it.slug];
             var s = note ? note.s : 'i';

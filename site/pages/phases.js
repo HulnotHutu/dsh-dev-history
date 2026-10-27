@@ -1,4 +1,4 @@
-/* 阶段：逐月叙事与承重决策——内容来自 content/narrative.md 的「阶段」章节 */
+/* 阶段：逐月叙事与承重决策——内容来自 content/narrative.json 的「阶段」章节 */
 (function () {
   'use strict';
   window.DSH_ARCH.pages.register('phases', {
@@ -21,9 +21,9 @@
           '<span class="m">' + api.monthKey(st.key) + ' · ' + st.name + '</span>' +
           '<span class="range">' + st.key.slice(0, 7) + '</span>' +
           '<span class="count">' + breakdown + '</span></header>' +
-          '<p>' + st.para.join('') + '</p>' +
+          '<p>' + st.para + '</p>' +
           (st.note && st.note.length
-            ? '<div class="sweep-callout"><p class="small">' + st.note.join('') + '</p></div>'
+            ? '<div class="sweep-callout"><p class="small">' + st.note + '</p></div>'
             : '') +
           '<ul class="keys">' + st.items.map(function (it) {
             var s = status[it.slug] || 'i';

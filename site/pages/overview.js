@@ -1,4 +1,4 @@
-/* 总览：导语、怎么读、节奏图、逐月主题、开发的地基——文案来自 content/narrative.md */
+/* 总览：导语、怎么读、节奏图、逐月主题、开发的地基——文案来自 content/narrative.json */
 (function () {
   'use strict';
   window.DSH_ARCH.pages.register('overview', {
@@ -9,7 +9,7 @@
         var ph = api.phaseOf(k) || { name: '', para: [] };
         return '<a href="#/phases"><span class="m">' + api.monthKey(k) + ' · ' + ph.name +
           '</span><span class="c">' + bm[k].length + ' 篇</span>' +
-          '<span class="p">' + ph.para.join('') + '</span></a>';
+          '<span class="p">' + ph.para + '</span></a>';
       }).join('');
       var sweepText = M.sweeps.map(function (s) { return s.date.slice(5) + ' 封 ' + s.count + ' 篇'; }).join('、');
       root.innerHTML =

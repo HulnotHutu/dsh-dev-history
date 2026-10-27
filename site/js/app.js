@@ -1,5 +1,5 @@
 /* 路由与共享渲染：hash 导航，按需注入各页面脚本。
-   页面内容全部来自结构化数据：window.DSH_ARCH（笔记）+ window.DSH_ARCH_ZH（中文）+ window.DSH_ARCH_CONTENT（content/narrative.md）。 */
+   页面内容全部来自结构化数据：window.DSH_ARCH（笔记）+ window.DSH_ARCH_ZH（中文）+ window.DSH_ARCH_CONTENT（content/narrative.json）。 */
 (function () {
   'use strict';
   var D = window.DSH_ARCH;
@@ -135,13 +135,13 @@
       if (current === name) paint(name);
     }
   };
-  /* 骨架槽位：index.html 只留容器，文案由 content/narrative.md 填充 */
+  /* 骨架槽位：index.html 只留容器，文案由 content/narrative.json 填充 */
   function fillSkeleton() {
     var sub = document.getElementById('slot-subtitle');
     if (sub) sub.textContent = C.site['副标题'] || '';
     var foot = document.getElementById('slot-footer');
     if (foot) {
-      foot.innerHTML = [C.site['页脚-1'], C.site['页脚-2']].map(fill).filter(Boolean)
+      foot.innerHTML = (C.site['页脚'] || []).map(fill).filter(Boolean)
         .map(esc).join('<br>');
     }
   }

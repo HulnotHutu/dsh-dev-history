@@ -29,7 +29,7 @@
           '<span class="m">' + api.monthKey(k) + '</span>' +
           '<span class="phase">' + ph.name + '</span>' +
           '<span class="count">' + bm[k].length + ' 篇</span></summary>' +
-          '<p class="phase-note">' + ph.para.join('') + '</p>';
+          '<p class="phase-note">' + ph.para + '</p>';
         var rows = document.createElement('div');
         rows.className = 'rows';
         bm[k].forEach(function (x) { rows.appendChild(rowEl(x, api, counts, lang)); });
