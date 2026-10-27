@@ -1,9 +1,12 @@
 name: deploy
 # 复制到发布仓库的 .github/workflows/deploy.yml。
 # 发布仓库保留本项目的目录结构时 path 用 site；若把 site/ 内容放在仓库根，改为 path: '.'
+# 当前 Pages 源为 gh-pages 分支（Deploy from a branch），本工作流仅手动触发；
+# 若在 Settings → Pages 把源切到 GitHub Actions，把 push 触发加回来即可改为推送即部署：
+# on:
+#   push:
+#     branches: [main, master]
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
 permissions:
   contents: read
