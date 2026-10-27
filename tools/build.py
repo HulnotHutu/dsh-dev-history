@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""把 data/arch-notes.json 与 content/narrative.json 组装为站点数据。
+"""把 data/arch-notes.json 与 content/{narrative,static}.json 组装为站点数据。
 
 产物：
   site/js/data.js      英文全文（window.DSH_ARCH）
   site/js/data.zh.js   中文全文（window.DSH_ARCH_ZH，按 slug 索引）
   site/js/content.js   编辑性内容（window.DSH_ARCH_CONTENT）——透传自 content/narrative.json
+  site/js/static.js    骨架固定文本（window.DSH_ARCH_STATIC）——透传自 content/static.json
 同时刷新 index.html 里静态资源的 ?v= 版本参数，避免浏览器缓存旧数据。
 """
 import json
@@ -16,7 +17,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parents[1]
 SRC = HERE / 'data' / 'arch-notes.json'
 NARRATIVE = HERE / 'content' / 'narrative.json'
+STATIC = HERE / 'content' / 'static.json'
 SITE = HERE / 'site'
+
+STATIC_KEYS = ('站名', '全称', '眉标', '描述模板', '导航', '无脚本提示')
 
 
 def main():
@@ -41,6 +45,11 @@ def main():
         if section not in content:
             sys.exit(f'content/narrative.json 缺少 {section} 章节')
 
+    static = json.loads(STATIC.read_text()) if STATIC.is_file() else {}
+    missing = [k for k in STATIC_KEYS if k not in static]
+    if missing:
+        sys.exit(f'content/static.json 缺少 {", ".join(missing)}')
+
     payload = {'notes': en, 'weeks': weeks, 'meta': meta}
     (SITE / 'js' / 'data.js').write_text(
         '/* 由 tools/build.py 生成；英文全文，源：.agents/notes/{archived,implemented}/architecture */\n'
@@ -51,6 +60,9 @@ def main():
     (SITE / 'js' / 'content.js').write_text(
         '/* 由 tools/build.py 生成；编辑性内容，源：content/narrative.json */\n'
         'window.DSH_ARCH_CONTENT = ' + json.dumps(content, ensure_ascii=False, separators=(',', ':')) + ';\n')
+    (SITE / 'js' / 'static.js').write_text(
+        '/* 由 tools/build.py 生成；骨架固定文本，源：content/static.json */\n'
+        'window.DSH_ARCH_STATIC = ' + json.dumps(static, ensure_ascii=False, separators=(',', ':')) + ';\n')
 
     stamp = datetime.now().strftime('%Y%m%d%H%M')
     index = SITE / 'index.html'
@@ -58,7 +70,7 @@ def main():
     html = re.sub(r'(\.(?:css|js))\?v=\d+', r'\1?v=' + stamp, html)
     index.write_text(html)
     print(f'data.js {len(en)} 条 | data.zh.js {len(zh)} 条 | content: 阶段 {len(content["phases"])} '
-          f'区域 {len(content["regions"])} | ?v={stamp}')
+          f'区域 {len(content["regions"])} | static {len(static)} 键 | ?v={stamp}')
 
 
 if __name__ == '__main__':

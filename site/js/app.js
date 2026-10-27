@@ -1,11 +1,16 @@
 /* 路由与共享渲染：hash 导航，按需注入各页面脚本。
-   页面内容全部来自结构化数据：window.DSH_ARCH（笔记）+ window.DSH_ARCH_ZH（中文）+ window.DSH_ARCH_CONTENT（content/narrative.json）。 */
+   骨架内没有任何文案：全部文本来自结构化数据——
+   window.DSH_ARCH（笔记）、DSH_ARCH_ZH（中文副本）、DSH_ARCH_CONTENT（narrative.json）、DSH_ARCH_STATIC（static.json）。 */
 (function () {
   'use strict';
   var D = window.DSH_ARCH;
   var C = window.DSH_ARCH_CONTENT || { site: {}, glossary: [], phases: [], regions: [] };
+  var S = window.DSH_ARCH_STATIC || {};
   var FILES = { overview: 'pages/overview.js', map: 'pages/map.js', ledger: 'pages/ledger.js', phases: 'pages/phases.js', about: 'pages/about.js' };
-  var TITLES = { overview: '总览', map: '架构', ledger: '账簿', phases: '阶段', about: '体例' };
+  /* 页名从 static.json 的导航表派生，避免与导航标签重复维护 */
+  var NAV = (S['导航'] || []).filter(function (n) { return FILES[n['路由']]; });
+  var NAV_NAME = {};
+  NAV.forEach(function (n) { NAV_NAME[n['路由']] = n['名称']; });
   var pages = {};
   var injected = {};
   var current = null;
@@ -59,7 +64,7 @@
     }
     return '<p>' + esc(md) + '</p>';
   }
-  /* content 文案中的 {占位符} 以提取元数据填充 */
+  /* 文案中的 {占位符} 以提取元数据填充 */
   function fill(str) {
     return String(str || '').replace(/\{(\w+)\}/g, function (_, k) {
       return D.meta[k] !== undefined ? D.meta[k] : '';
@@ -73,6 +78,7 @@
     data: D,
     zh: window.DSH_ARCH_ZH || {},
     content: C,
+    static: S,
     site: C.site,
     phasesList: C.phases,
     phaseOf: function (k) { return phaseMap[k] || null; },
@@ -118,7 +124,7 @@
     var main = document.getElementById('page');
     main.innerHTML = '';
     pages[name].render(main, api);
-    document.title = '架构决策编年 · ' + TITLES[name];
+    document.title = S['站名'] + ' · ' + (NAV_NAME[name] || '');
     window.scrollTo(0, 0);
   }
   function paintNav() {
@@ -135,14 +141,27 @@
       if (current === name) paint(name);
     }
   };
-  /* 骨架槽位：index.html 只留容器，文案由 content/narrative.json 填充 */
+  /* 骨架填充：index.html 只描述元素，全部文本（含固定 UI 文本）来自 static.json / narrative.json */
   function fillSkeleton() {
+    var metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', fill(S['描述模板']));
+    var kick = document.getElementById('slot-kicker');
+    if (kick) kick.innerHTML = S['眉标'] || '';
+    var h1 = document.getElementById('slot-h1');
+    if (h1) h1.textContent = S['站名'] || '';
+    document.title = S['站名'] || '';
     var sub = document.getElementById('slot-subtitle');
     if (sub) sub.textContent = C.site['副标题'] || '';
     var foot = document.getElementById('slot-footer');
     if (foot) {
       foot.innerHTML = (C.site['页脚'] || []).map(fill).filter(Boolean)
         .map(esc).join('<br>');
+    }
+    var nav = document.getElementById('nav');
+    if (nav) {
+      nav.innerHTML = NAV.map(function (n) {
+        return '<a href="#/' + esc(n['路由']) + '">' + esc(n['名称']) + '</a>';
+      }).join('');
     }
   }
   window.addEventListener('hashchange', route);

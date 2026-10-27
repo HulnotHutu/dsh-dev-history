@@ -1,6 +1,6 @@
 # dsh-dev-history · DeepSeek Harness 演化史
 
-展示 [DeepSeek Harness](../)（`dsh`）如何演化的独立小项目。核心是一条**markdown → 结构化数据 → 静态骨架**的工作流：仓库 `.agents/notes/` 里 architecture 类 Agent Notes（结构性设计决策，2026-06-11 建仓次日起）是元数据，`content/narrative.json` 是站点的编辑性内容元数据（逐月叙事、架构区域、精选决策注释、站点文案），构建脚本把两者编译为结构化 JS；`site/index.html` 只是骨架，运行时填充。站点以 archify 生成的[整体架构图](site/dsh-architecture.html)为枢纽，按架构区域铺开每块能力的决策史。
+展示 [DeepSeek Harness](../)（`dsh`）如何演化的独立小项目。核心是一条**markdown → 结构化数据 → 静态骨架**的工作流：仓库 `.agents/notes/` 里 architecture 类 Agent Notes（结构性设计决策，2026-06-11 建仓次日起）是元数据，`content/narrative.json` 与 `content/static.json`（骨架固定文本、导航标签）是站点的文本元数据（逐月叙事、架构区域、精选决策注释、站点文案），构建脚本把两者编译为结构化 JS；`site/index.html` 只是骨架，运行时填充。站点以 archify 生成的[整体架构图](site/dsh-architecture.html)为枢纽，按架构区域铺开每块能力的决策史。
 
 ```
 dsh 笔记 (.agents/notes/**.md) ─┐
@@ -37,7 +37,7 @@ content/narrative.json ───────────┴───────
 ```sh
 git fetch origin            # 可选：同步远端，补齐 ◇ 笔记
 python3 tools/extract.py    # 仓库 -> data/arch-notes.json（可重复运行）
-python3 tools/build.py      # data -> site/js/data.js + site/js/data.zh.js（并刷新 ?v= 防缓存）
+python3 tools/build.py      # data + content -> site/js/{data,data.zh,content,static}.js（刷新 ?v=）
 ```
 
 依赖：**站点运行零依赖**（无框架、无 CDN、无字体请求，可离线打开）；构建与更新仅需 Python 3 标准库 + git。`tools/extract.py` 在远端不可达时自动退化为仅本地口径。
@@ -53,7 +53,7 @@ dsh-dev-history/
 ├─ README.md            本文件
 ├─ tools/extract.py     提取：仓库笔记 -> data/arch-notes.json（含周桶与统计）
 ├─ tools/build.py       组装：data + content/narrative.json -> site/js/*.js
-├─ content/narrative.json 编辑性内容元数据（逐月叙事、架构区域、精选决策注释、站点文案）
+├─ content/{narrative,static}.json 文本元数据（编辑内容 + 骨架固定文本与导航）
 ├─ data/arch-notes.json 提取产物（中间数据，可重建）
 ├─ deploy/              GitHub Pages 部署：workflow + gh-pages 脚本 + 说明
 └─ site/                静态站点（index.html + css + js + pages + 架构整图），即部署单元
