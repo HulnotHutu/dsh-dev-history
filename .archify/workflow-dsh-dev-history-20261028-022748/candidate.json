@@ -1,0 +1,372 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "dsh-dev-history 演化史构建与发布工作流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/HulnotHutu/dsh-dev-history",
+      "revision": "8e149ff95b7257bba5f5c1c67fe10fd74cf1499a"
+    },
+    "output": "dsh-dev-history-workflow.html"
+  },
+  "lanes": [
+    {
+      "id": "source",
+      "label": "数据源（元数据）"
+    },
+    {
+      "id": "pipeline",
+      "label": "构建流水线 tools/"
+    },
+    {
+      "id": "ai",
+      "label": "AI 总结层（可选）"
+    },
+    {
+      "id": "editor",
+      "label": "人工校订",
+      "variant": "exception"
+    },
+    {
+      "id": "publish",
+      "label": "发布"
+    },
+    {
+      "id": "site",
+      "label": "站点运行时"
+    }
+  ],
+  "phases": [
+    {
+      "id": "extract_phase",
+      "label": "提取",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "curate_phase",
+      "label": "总结与校订",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "publish_phase",
+      "label": "发布",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "ai_layer",
+      "label": "AI 总结层（可选）",
+      "lane": "ai",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "human_gate",
+      "label": "人工关卡",
+      "lane": "editor",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "notes",
+    "extract",
+    "archnotes",
+    "build",
+    "push",
+    "live",
+    "runtime"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "notes",
+      "remote",
+      "content"
+    ],
+    "allowedTerminals": [
+      "runtime",
+      "llm"
+    ],
+    "requiredPaths": [
+      {
+        "from": "notes",
+        "to": "runtime"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "notes",
+      "lane": "source",
+      "col": 0,
+      "type": "database",
+      "label": "dsh 笔记库",
+      "sublabel": "implemented + archived",
+      "width": 140
+    },
+    {
+      "id": "remote",
+      "lane": "source",
+      "col": 0,
+      "type": "database",
+      "label": "远端 origin/master",
+      "sublabel": "◇ 未同步笔记补齐",
+      "yOffset": 96,
+      "width": 140
+    },
+    {
+      "id": "content",
+      "lane": "source",
+      "col": 2,
+      "type": "database",
+      "label": "content/*.json",
+      "sublabel": "narrative + static",
+      "width": 140
+    },
+    {
+      "id": "extract",
+      "lane": "pipeline",
+      "col": 1,
+      "type": "backend",
+      "label": "extract.py",
+      "sublabel": "结构化 + 周桶统计",
+      "width": 140,
+      "sources": [
+        {
+          "path": "tools/extract.py",
+          "label": "提取管线"
+        }
+      ]
+    },
+    {
+      "id": "archnotes",
+      "lane": "pipeline",
+      "col": 2,
+      "type": "database",
+      "label": "arch-notes.json",
+      "sublabel": "379 篇 · 双语全文",
+      "width": 140
+    },
+    {
+      "id": "build",
+      "lane": "pipeline",
+      "col": 3,
+      "type": "backend",
+      "label": "build.py",
+      "sublabel": "四份运行时 JS + ?v=",
+      "width": 140,
+      "sources": [
+        {
+          "path": "tools/build.py",
+          "label": "组装产物"
+        }
+      ]
+    },
+    {
+      "id": "summarize",
+      "lane": "ai",
+      "col": 2,
+      "type": "backend",
+      "label": "summarize.py",
+      "sublabel": "AI 起草 · 自动对账",
+      "tag": "可选",
+      "width": 140,
+      "sources": [
+        {
+          "path": "tools/summarize.py",
+          "label": "AI 起草与对账"
+        }
+      ]
+    },
+    {
+      "id": "llm",
+      "lane": "ai",
+      "col": 2,
+      "type": "cloud",
+      "label": "deepseek-v4-flash",
+      "sublabel": "json_object 模式",
+      "width": 150,
+      "yOffset": 96
+    },
+    {
+      "id": "draft",
+      "lane": "ai",
+      "col": 3,
+      "type": "database",
+      "label": "narrative.draft.json",
+      "sublabel": "AI 草稿 · 待校订",
+      "width": 150
+    },
+    {
+      "id": "review",
+      "lane": "editor",
+      "col": 4,
+      "type": "security",
+      "label": "人工校订",
+      "sublabel": "对账单 · 事实核对",
+      "tag": "必经关卡",
+      "width": 140
+    },
+    {
+      "id": "push",
+      "lane": "publish",
+      "col": 4,
+      "type": "messagebus",
+      "label": "push 两分支",
+      "sublabel": "main + gh-pages",
+      "width": 140
+    },
+    {
+      "id": "live",
+      "lane": "publish",
+      "col": 5,
+      "type": "cloud",
+      "label": "GitHub Pages",
+      "sublabel": "gh-pages 分支源",
+      "width": 140
+    },
+    {
+      "id": "runtime",
+      "lane": "site",
+      "col": 5,
+      "type": "frontend",
+      "label": "五页运行时",
+      "sublabel": "骨架 + marked 渲染",
+      "width": 140,
+      "sources": [
+        {
+          "path": "site/index.html",
+          "label": "骨架"
+        },
+        {
+          "path": "site/js/app.js",
+          "label": "路由与填充"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "scan",
+      "from": "notes",
+      "to": "extract",
+      "label": "扫描 architecture",
+      "variant": "default"
+    },
+    {
+      "id": "backfill",
+      "from": "remote",
+      "to": "extract",
+      "label": "git show 补齐 ◇",
+      "variant": "dashed"
+    },
+    {
+      "id": "structured",
+      "from": "extract",
+      "to": "archnotes",
+      "label": "双语全文 + 统计",
+      "variant": "emphasis"
+    },
+    {
+      "id": "corpus",
+      "from": "archnotes",
+      "to": "summarize",
+      "label": "紧凑语料",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "structured-call",
+      "from": "summarize",
+      "to": "llm",
+      "label": "9 段结构化调用",
+      "variant": "dashed"
+    },
+    {
+      "id": "draft-out",
+      "from": "summarize",
+      "to": "draft",
+      "label": "AI 草稿 + 自动对账",
+      "variant": "dashed"
+    },
+    {
+      "id": "reconcile",
+      "from": "draft",
+      "to": "review",
+      "label": "对账单",
+      "variant": "security"
+    },
+    {
+      "id": "apply",
+      "from": "review",
+      "to": "build",
+      "label": "--apply 后重跑",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "id": "content-feed",
+      "from": "content",
+      "to": "build",
+      "label": "编辑内容 + 固定文本",
+      "variant": "default"
+    },
+    {
+      "id": "build-out",
+      "from": "build",
+      "to": "push",
+      "label": "推送两分支",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deploy",
+      "from": "push",
+      "to": "live",
+      "label": "Pages 构建",
+      "variant": "default"
+    },
+    {
+      "id": "serve",
+      "from": "live",
+      "to": "runtime",
+      "label": "访客访问",
+      "variant": "emphasis"
+    },
+    {
+      "id": "notes-feed",
+      "from": "archnotes",
+      "to": "build",
+      "label": "笔记数据",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "数据契约",
+      "items": [
+        "index.html 是骨架：零文案，槽位由 static.js / content.js 填充",
+        "narrative 的 slug 运行时被 arch-notes 校验，未知自动降级"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "质量门",
+      "items": [
+        "extract/build 缺文件或缺章节即报错退出",
+        "AI 草稿先过 slug 对账与格式化，再进人工校订",
+        "统计数字只来自 meta 占位符，AI 不得现算"
+      ]
+    }
+  ]
+}

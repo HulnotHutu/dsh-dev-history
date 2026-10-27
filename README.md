@@ -60,6 +60,7 @@ python3 tools/build.py      # data + content -> site/js/{data,data.zh,content,st
 ```
 dsh-dev-history/
 ├─ README.md            本文件
+├─ dsh-dev-history-workflow.html  构建发布工作流图（archify 生成，仅仓库留存，不在站点前端展示）
 ├─ tools/extract.py     提取：仓库笔记 -> data/arch-notes.json（含周桶与统计）
 ├─ tools/build.py       组装：data + content/narrative.json -> site/js/*.js
 ├─ content/{narrative,static}.json 文本元数据（编辑内容 + 骨架固定文本与导航）
