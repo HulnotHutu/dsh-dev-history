@@ -55,8 +55,22 @@ SYSTEM_PROMPT = """你是「架构决策编年」的资深编辑，为 DeepSeek 
 
 # DashScope 兼容模式 + response_format: json_object（结构化输出）。
 # 约束：messages 里须含 "JSON" 字样；不设 max_tokens（防 JSON 截断）；模型不支持时降级重试。
-ENDPOINT = 'https://llm-p317n4rywd1joyu3.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions'
+# 工作区 ID 不入库：优先环境变量，否则从用户本地 ~/scripts/aihelpme.sh 解析。
 MODEL = 'deepseek-v4-flash-0731'
+
+
+def endpoint():
+    if os.environ.get('DASHSCOPE_COMPATIBLE_URL'):
+        return os.environ['DASHSCOPE_COMPATIBLE_URL']
+    if os.environ.get('DASHSCOPE_WORKSPACE'):
+        return (f'https://{os.environ["DASHSCOPE_WORKSPACE"]}'
+                '.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions')
+    script = Path.home() / 'scripts' / 'aihelpme.sh'
+    m = re.search(r'WorkspaceId=(\S+)', script.read_text()) if script.is_file() else None
+    if not m:
+        sys.exit('未找到 DashScope 工作区：设置 DASHSCOPE_WORKSPACE，或确认 ~/scripts/aihelpme.sh 存在')
+    return (f'https://{m.group(1)}'
+            '.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions')
 _KEY_CACHE = {}
 
 
@@ -75,7 +89,7 @@ def chat(messages, structured):
     body = {'model': MODEL, 'messages': [{'role': 'system', 'content': SYSTEM_PROMPT}] + messages}
     if structured:
         body['response_format'] = {'type': 'json_object'}
-    req = urllib.request.Request(ENDPOINT, data=json.dumps(body).encode(),
+    req = urllib.request.Request(endpoint(), data=json.dumps(body).encode(),
                                  headers={'Authorization': 'Bearer ' + api_key(),
                                           'Content-Type': 'application/json'})
     with urllib.request.urlopen(req, timeout=240) as r:
