@@ -28,15 +28,29 @@ CURRENT = HERE / 'content' / 'narrative.json'
 DRAFT = HERE / 'content' / 'narrative.draft.json'
 AI = Path.home() / 'scripts' / 'aihelpme.sh'
 
-PHASE_TASK = ('你是「架构决策编年」站的编辑。根据当月决策清单（日期/slug/中文标题/状态/被引用数）'
-              '与该月现状文案，重写这个阶段的 narrative 条目。只输出一个 JSON 对象，不要多余文字。')
-REGION_TASK = ('你是「架构决策编年」站的编辑。根据架构区域的现状描述、精选条目与全量决策清单，'
-               '重写该区域的 narrative 条目。只输出一个 JSON 对象，不要多余文字。')
+PHASE_TASK = ('任务：根据当月决策清单（日期/slug/中文标题/状态/被引用数）与该月现状文案，'
+              '重写这个阶段的 narrative 条目。')
+REGION_TASK = ('任务：根据架构区域的现状描述、精选条目与全量决策清单，'
+               '重写该区域的 narrative 条目。')
 RULES = """硬约束：
 1. name：4-6 字阶段名；desc/para：80-160 字中文，只用清单与现状里存在的事实，不得出现任何篇数/百分比数字（页面另行显示）。
 2. items：6-12 条；slug 必须逐字来自候选清单；gloss 为不超过 24 字的中文一句话；除明显错误外保留现有条目，可少量增删。
 3. note：仅当给定"大扫除提示"时保留并润色，否则为空字符串。
 4. desc/para 中不要出现 markdown 标记。"""
+
+# 编辑人设与风格宪章：以仓库现有人写叙事为风格基准（few-shot 由 main() 注入）。
+# 目标是把模型的默认清单腔校成"先观点后事实、每句承载一个判断"的人写密度。
+SYSTEM_PROMPT = """你是「架构决策编年」的资深编辑，为 DeepSeek Harness 的决策账簿撰写阶段叙事、区域解说与精选条目注释。
+
+风格宪章：
+- 先观点，后事实：段落开头给出这个月/这块区域的判断，再用具体决策支撑；判断句要可反驳（"能力缝复制到 LSP、subprocess"），不是话题罗列（"涉及 LSP、subprocess 等方面"）。
+- 每句承载一个判断；写完删掉不承载判断的句子。
+- 禁止清单腔与公文腔：不用"同时""此外""值得一提的是"起句；不罗列名词串；不用"本文""该月"这类公文指代。
+- 禁止空洞修饰与比喻：不要"稳健""强大""赋能""宛如"；平实、直接、句式简练。
+- 术语与仓库一致：能力缝、封存、现行、生命周期、turn、session、profile、bundle。
+- 破折号用——；不使用 markdown 标记；不出现任何篇数与百分比。
+
+输出：只输出一个 JSON 对象（这是硬性格式要求），不要代码块围栏，不要解释。"""
 
 # DashScope 兼容模式 + response_format: json_object（结构化输出）。
 # 约束：messages 里须含 "JSON" 字样；不设 max_tokens（防 JSON 截断）；模型不支持时降级重试。
@@ -57,7 +71,7 @@ def api_key():
 
 
 def chat(messages, structured):
-    body = {'model': MODEL, 'messages': messages}
+    body = {'model': MODEL, 'messages': [{'role': 'system', 'content': SYSTEM_PROMPT}] + messages}
     if structured:
         body['response_format'] = {'type': 'json_object'}
     req = urllib.request.Request(ENDPOINT, data=json.dumps(body).encode(),
@@ -68,10 +82,13 @@ def chat(messages, structured):
     return resp['choices'][0]['message']['content']
 
 
-def call_ai(task, payload):
+def call_ai(task, payload, style=''):
     """结构化输出调 DashScope（json_object 保证合法 JSON）；不支持 response_format 的模型自动降级为普通调用再剥壳。"""
-    messages = [{'role': 'system', 'content': '只输出 JSON。'},
-                {'role': 'user', 'content': RULES + '\n\n' + task + '\n\n' + payload}]
+    user = RULES + '\n\n' + task
+    if style:
+        user += '\n\n风格基准（模仿其密度与判断句式，不要复制内容）：\n' + style
+    user += '\n\n' + payload
+    messages = [{'role': 'user', 'content': user}]
     try:
         return json.loads(chat(messages, structured=True))
     except urllib.error.HTTPError as e:
@@ -129,6 +146,10 @@ def main():
     known = {x['n'] for x in notes}
     report = []
 
+    # 风格基准：取两段人写叙事作 few-shot，锚定"先观点后事实"的人写密度
+    human_paras = [p['para'] for p in current.get('phases', []) if p.get('para')]
+    style = '\n\n'.join(human_paras[:1] + human_paras[-1:])
+
     for cur in current.get('phases', []):
         key = cur['key']
         pool = by_month.get(key, [])
@@ -136,7 +157,7 @@ def main():
                    f"当月决策 {len(pool)} 条：\n{corpus(pool, counts)}\n\n"
                    f"现状条目：\n{json.dumps(cur, ensure_ascii=False, indent=1)}")
         try:
-            out = call_ai(PHASE_TASK, payload)
+            out = call_ai(PHASE_TASK, payload, style)
         except (RuntimeError, json.JSONDecodeError) as e:
             print(f'warn: 阶段 {key} AI 失败，保留现状 —— {e}', file=sys.stderr)
             draft['phases'].append(cur)
