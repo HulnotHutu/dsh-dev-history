@@ -48,30 +48,6 @@
    "note": "",
    "items": [
     {
-     "slug": "microkernel-event-taxonomy",
-     "gloss": "事件域按会话、agent、能力划分"
-    },
-    {
-     "slug": "event-sourced-sessions",
-     "gloss": "会话是只追加事件日志，模型可见内容皆可重建"
-    },
-    {
-     "slug": "session-surface",
-     "gloss": "会话 surface 是事件日志上的有序投影"
-    },
-    {
-     "slug": "capability-seams",
-     "gloss": "能力缝以服务定义、提供方、消费方分工可替换"
-    },
-    {
-     "slug": "session-persistence",
-     "gloss": "会话持久化的存储与世代策略"
-    },
-    {
-     "slug": "turn-enclosure-invariant",
-     "gloss": "所有会话事件必须落在某个 turn 之内"
-    },
-    {
      "slug": "agent-lifecycle-and-ownership-contracts",
      "gloss": "agent 生命周期与所有权契约"
     },
@@ -80,12 +56,36 @@
      "gloss": "跨边界标识一律品牌化而非裸字符串"
     },
     {
-     "slug": "package-hierarchy",
-     "gloss": "包重组为模块化层级结构"
+     "slug": "capability-seams",
+     "gloss": "能力缝以服务定义、提供方、消费方分工可替换"
     },
     {
      "slug": "event-domain-semantics",
      "gloss": "事件域语义：会话是事实日志，agent 是实时通道"
+    },
+    {
+     "slug": "event-sourced-sessions",
+     "gloss": "会话是只追加事件日志，模型可见内容皆可重建"
+    },
+    {
+     "slug": "microkernel-event-taxonomy",
+     "gloss": "事件域按会话、agent、能力划分"
+    },
+    {
+     "slug": "package-hierarchy",
+     "gloss": "包重组为模块化层级结构"
+    },
+    {
+     "slug": "session-persistence",
+     "gloss": "会话持久化的存储与世代策略"
+    },
+    {
+     "slug": "session-surface",
+     "gloss": "会话 surface 是事件日志上的有序投影"
+    },
+    {
+     "slug": "turn-enclosure-invariant",
+     "gloss": "所有会话事件必须落在某个 turn 之内"
     }
    ]
   },
@@ -96,20 +96,8 @@
    "note": "",
    "items": [
     {
-     "slug": "provider-routed-llm-adapters",
-     "gloss": "按提供方路由的模型适配器与 pi-ai 后端"
-    },
-    {
-     "slug": "lsp-capability-seam",
-     "gloss": "LSP 能力 seam 与面向模型的查询工具"
-    },
-    {
-     "slug": "subprocess-seam",
-     "gloss": "进程服务成为 bash 执行器之下的独立 seam"
-    },
-    {
-     "slug": "job-registry-seam",
-     "gloss": "任务注册表以 dsh-jobs 形式作为能力 seam"
+     "slug": "cooperative-tool-cancellation",
+     "gloss": "注册表边界上的协作式工具取消"
     },
     {
      "slug": "gui-layering-and-rpc-protocol",
@@ -120,12 +108,24 @@
      "gloss": "client cordis 插件树与 React-free 对象层"
     },
     {
-     "slug": "zstandard-jsonl-session-logs",
-     "gloss": "会话日志落盘为 zstd 压缩 JSONL"
+     "slug": "job-registry-seam",
+     "gloss": "任务注册表以 dsh-jobs 形式作为能力 seam"
     },
     {
-     "slug": "cooperative-tool-cancellation",
-     "gloss": "注册表边界上的协作式工具取消"
+     "slug": "lsp-capability-seam",
+     "gloss": "LSP 能力 seam 与面向模型的查询工具"
+    },
+    {
+     "slug": "provider-routed-llm-adapters",
+     "gloss": "按提供方路由的模型适配器与 pi-ai 后端"
+    },
+    {
+     "slug": "subprocess-seam",
+     "gloss": "进程服务成为 bash 执行器之下的独立 seam"
+    },
+    {
+     "slug": "zstandard-jsonl-session-logs",
+     "gloss": "会话日志落盘为 zstd 压缩 JSONL"
     }
    ]
   },
@@ -136,44 +136,44 @@
    "note": "",
    "items": [
     {
-     "slug": "profile-plugin-bundles",
-     "gloss": "profile 插件组合包取代固定 overlay"
-    },
-    {
-     "slug": "single-dsh-application-launcher",
-     "gloss": "单一 dsh 启动应用 profile"
+     "slug": "browser-token-authentication",
+     "gloss": "浏览器 token 认证"
     },
     {
      "slug": "electron-desktop-packaging-and-updates",
      "gloss": "Electron 桌面打包与更新"
     },
     {
-     "slug": "python-sdk-dsh-profile-runtime",
-     "gloss": "Python SDK 复用 dsh profile 运行时"
-    },
-    {
-     "slug": "standalone-sdk-minimal-profile",
-     "gloss": "sdk-minimal 独立 profile"
-    },
-    {
-     "slug": "session-log-version-mechanism",
-     "gloss": "会话日志版本机制"
-    },
-    {
      "slug": "handle-based-session-persistence",
      "gloss": "基于句柄的会话持久化"
+    },
+    {
+     "slug": "profile-plugin-bundles",
+     "gloss": "profile 插件组合包取代固定 overlay"
+    },
+    {
+     "slug": "python-sdk-dsh-profile-runtime",
+     "gloss": "Python SDK 复用 dsh profile 运行时"
     },
     {
      "slug": "released-session-format-migrations",
      "gloss": "发布格式的相邻迁移链"
     },
     {
-     "slug": "browser-token-authentication",
-     "gloss": "浏览器 token 认证"
-    },
-    {
      "slug": "rename-code-mode-to-ptc",
      "gloss": "code-mode 更名 PTC"
+    },
+    {
+     "slug": "session-log-version-mechanism",
+     "gloss": "会话日志版本机制"
+    },
+    {
+     "slug": "single-dsh-application-launcher",
+     "gloss": "单一 dsh 启动应用 profile"
+    },
+    {
+     "slug": "standalone-sdk-minimal-profile",
+     "gloss": "sdk-minimal 独立 profile"
     }
    ]
   },
@@ -184,8 +184,8 @@
    "note": "9 月两次封存大扫除：9-04 封存 99 篇，9-30 封存 59 篇——归档库绝大部分在这两天入库冻结。",
    "items": [
     {
-     "slug": "v3-canonical-session-envelopes",
-     "gloss": "v3 规范会话信封"
+     "slug": "declarative-agent-presets",
+     "gloss": "声明式 agent preset"
     },
     {
      "slug": "desktop-bundled-runtime-and-external-plugins",
@@ -196,28 +196,28 @@
      "gloss": "以共享 Web 应用承载 Desktop"
     },
     {
-     "slug": "plugin-management-in-the-web-sidebar",
-     "gloss": "Web 侧栏管理插件"
+     "slug": "experimental-cua-object-api",
+     "gloss": "原生 CUA 对象独立于求值器归属"
     },
     {
      "slug": "plugin-install-registries",
      "gloss": "插件安装 registry"
     },
     {
-     "slug": "declarative-agent-presets",
-     "gloss": "声明式 agent preset"
-    },
-    {
-     "slug": "tool-call-three-phases",
-     "gloss": "工具调用拆为三阶段"
+     "slug": "plugin-management-in-the-web-sidebar",
+     "gloss": "Web 侧栏管理插件"
     },
     {
      "slug": "scheduled-message-framing",
      "gloss": "定时消息的事件框架"
     },
     {
-     "slug": "experimental-cua-object-api",
-     "gloss": "原生 CUA 对象独立于求值器归属"
+     "slug": "tool-call-three-phases",
+     "gloss": "工具调用拆为三阶段"
+    },
+    {
+     "slug": "v3-canonical-session-envelopes",
+     "gloss": "v3 规范会话信封"
     }
    ]
   },
@@ -228,28 +228,28 @@
    "note": "",
    "items": [
     {
-     "slug": "persistent-ptc-sandbox",
-     "gloss": "PTC 运行时的持久沙箱"
-    },
-    {
-     "slug": "independent-session-forks",
-     "gloss": "普通分叉不再携带创建者关系，与子代理明确区分"
+     "slug": "cua-shared-native-helper",
+     "gloss": "共享 CUA 进程以 Agent 为作用域持有状态"
     },
     {
      "slug": "deepseek-official-model-listing",
      "gloss": "DeepSeek 官方模型目录"
     },
     {
-     "slug": "when-access",
-     "gloss": "客户端插件的注册随对端访问变化自动开关"
+     "slug": "independent-session-forks",
+     "gloss": "普通分叉不再携带创建者关系，与子代理明确区分"
+    },
+    {
+     "slug": "persistent-ptc-sandbox",
+     "gloss": "PTC 运行时的持久沙箱"
     },
     {
      "slug": "websocket-permessage-deflate",
      "gloss": "WebSocket 连接启用 permessage-deflate 压缩"
     },
     {
-     "slug": "cua-shared-native-helper",
-     "gloss": "共享 CUA 进程以 Agent 为作用域持有状态"
+     "slug": "when-access",
+     "gloss": "客户端插件的注册随对端访问变化自动开关"
     }
    ]
   }

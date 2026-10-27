@@ -117,19 +117,105 @@ def corpus(notes, counts):
     return '\n'.join(lines)
 
 
+ZWSP = '\u200B'
+
+
+def clean_text(s):
+    """格式化一段 AI 文本：去零宽字符/markdown 残留，折叠空白，单个 em dash 规范为 ——。"""
+    s = (s or '').replace(ZWSP, '')
+    s = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', s)
+    s = s.replace('**', '').replace('`', '').replace('#', '')
+    s = re.sub(r'\s+', ' ', s).strip()
+    s = re.sub(r'(?<!—)—(?!—)', '——', s)
+    return s
+
+
+def normalize_draft(draft, notes, current):
+    """slug 对账 + 格式化。返回 (draft, 需人工关注列表)。"""
+    issues = []
+    d_month = {x['n']: x['d'][:7] for x in notes}
+    known = set(d_month)
+    cur_name = {p['key']: p['name'] for p in current.get('phases', [])}
+
+    for p in draft['phases']:
+        p['name'] = cur_name.get(p['key'], p['name'])
+        p['para'] = clean_text(p.get('para'))
+        p['note'] = clean_text(p.get('note'))
+        seen, keep, misplaced = set(), [], []
+        for it in p.get('items', []):
+            slug = it.get('slug', '').strip()
+            if slug not in known:
+                issues.append(f"[{p['name']}] 未知 slug 已剔除：{slug}")
+                continue
+            if slug in seen:
+                issues.append(f"[{p['name']}] 重复条目已去重：{slug}")
+                continue
+            seen.add(slug)
+            it = {'slug': slug, 'gloss': clean_text(it.get('gloss'))}
+            if len(it['gloss']) > 24:
+                issues.append(f"[{p['name']}] gloss 超长({len(it['gloss'])}字)需人工改写：{slug}")
+            month = d_month[slug]
+            if month != p['key']:
+                misplaced.append(it)
+                continue
+            keep.append(it)
+        if misplaced:
+            by_target = {}
+            for it in misplaced:
+                by_target.setdefault(d_month[it['slug']], []).append(it)
+            for tm, items in by_target.items():
+                tgt = next((q for q in draft['phases'] if q['key'] == tm), None)
+                moved = [it['slug'] for it in items]
+                if tgt is not None:
+                    tgt['items'].extend(items)
+                    issues.append(f"[{p['name']}] 月份错位已迁移 -> {tgt['name']}：{', '.join(moved)}")
+                else:
+                    issues.append(f"[{p['name']}] 月份错位且无目标阶段，已丢弃：{', '.join(moved)}")
+        p['items'] = sorted(keep, key=lambda it: it['slug'])
+        if not 80 <= len(p['para']) <= 160:
+            issues.append(f"[{p['name']}] para 长度 {len(p['para'])} 字，超出 80-160，需人工调整")
+
+    for r in draft['regions']:
+        r['desc'] = clean_text(r.get('desc'))
+        seen = set()
+        keep = []
+        for it in r.get('items', []):
+            slug = it.get('slug', '').strip()
+            if slug not in known:
+                issues.append(f"[{r['name']}] 未知 slug 已剔除：{slug}")
+                continue
+            if slug in seen:
+                continue
+            seen.add(slug)
+            keep.append({'slug': slug, 'gloss': clean_text(it.get('gloss'))})
+        r['items'] = keep
+    return draft, issues
+
+
 def main():
     apply = '--apply' in sys.argv
-    if apply and DRAFT.is_file():
-        draft = json.loads(DRAFT.read_text())
-        backup = CURRENT.with_suffix('.json.bak')
-        if CURRENT.is_file():
-            backup.write_text(CURRENT.read_text())
-        CURRENT.write_text(json.dumps(draft, ensure_ascii=False, indent=1))
-        print('已套用已评审的草稿（原文件备份为 narrative.json.bak）；记得重跑 tools/build.py')
-        return
+    check = '--check' in sys.argv
     data = json.loads(DATA.read_text())
     notes, meta = data['notes'], data['meta']
     current = json.loads(CURRENT.read_text()) if CURRENT.is_file() else {'site': {}, 'glossary': [], 'phases': [], 'regions': []}
+
+    if check or apply:
+        if not DRAFT.is_file():
+            sys.exit('缺少 content/narrative.draft.json')
+        draft = json.loads(DRAFT.read_text())
+        draft, issues = normalize_draft(draft, notes, current)
+        DRAFT.write_text(json.dumps(draft, ensure_ascii=False, indent=1))
+        print(f'== 对账完成：{len(issues)} 条需人工关注 ==')
+        for i in issues:
+            print('  !', i)
+        if not check:
+            backup = CURRENT.with_suffix('.json.bak')
+            if CURRENT.is_file():
+                backup.write_text(CURRENT.read_text())
+            CURRENT.write_text(json.dumps(draft, ensure_ascii=False, indent=1))
+            print('已套用已对账的草稿（原文件备份为 narrative.json.bak）；记得重跑 tools/build.py')
+        return
+
 
     counts, zt = {}, {}
     for x in notes:
@@ -189,8 +275,11 @@ def main():
                                  'desc': out.get('desc', ''), 'items': out['items']})
         report.append((cur['name'], f"条目 {len(cur['items'])}->{len(out['items'])}" + (f'，剔除未知 slug {bad}' if bad else '')))
 
+    draft, issues = normalize_draft(draft, notes, current)
     DRAFT.write_text(json.dumps(draft, ensure_ascii=False, indent=1))
-    print('== AI 草稿生成完毕 ->', DRAFT)
+    print('== AI 草稿生成完毕（已对账）->', DRAFT)
+    for i in issues:
+        print('  !', i)
     for k, v in report:
         print(f'  {k}: {v}')
     if apply:
