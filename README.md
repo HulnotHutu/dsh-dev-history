@@ -28,8 +28,8 @@ content/narrative.json ───────────┴───────
 
 **收录范围（刻意收窄为"决策"）**：站点只收录 `implemented/` + `archived/` 两个生命周期的 architecture 类——即已经做出并落地（或已封存）的结构性决策。**不收录**另外两个生命周期：
 
-- `proposed/`（约 41 篇）：正在评审中的提案，尚无结论，且数据形态不同（`## Proposal` / `## Acceptance criteria` / `## Risks` 章节而非 `## Decision`）；
-- `rejected/`（约 8 篇）：被否决且仍值得留存的记录——它们是"差点走错的路"的警示，按制度只在警示价值存续期间保留，之后会被删除。
+- `proposed/`：正在评审中的提案，尚无结论，且数据形态不同（`## Proposal` / `## Acceptance criteria` / `## Risks` 章节而非 `## Decision`）；
+- `rejected/`：被否决且仍值得留存的记录——它们是"差点走错的路"的警示，按制度只在警示价值存续期间保留，之后会被删除；
 
 两者将来可作为独立维度加入站点（状态词表加"提案 / 已否决"两档，`tools/extract.py` 增加对应目录读取即可），当前版本明确不覆盖。
 
