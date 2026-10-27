@@ -33,10 +33,11 @@ PHASE_TASK = ('任务：根据当月决策清单（日期/slug/中文标题/状�
 REGION_TASK = ('任务：根据架构区域的现状描述、精选条目与全量决策清单，'
                '重写该区域的 narrative 条目。')
 RULES = """硬约束：
-1. name：4-6 字阶段名；desc/para：80-160 字中文，只用清单与现状里存在的事实，不得出现任何篇数/百分比数字（页面另行显示）。
+1. desc/para：80-160 字中文，只用清单与现状里存在的事实，不得出现任何篇数/百分比数字（页面另行显示）。
 2. items：6-12 条；slug 必须逐字来自候选清单；gloss 为不超过 24 字的中文一句话；除明显错误外保留现有条目，可少量增删。
 3. note：仅当给定"大扫除提示"时保留并润色，否则为空字符串。
-4. desc/para 中不要出现 markdown 标记。"""
+4. desc/para 中不要出现 markdown 标记。
+5. 名称是站点信息架构的一部分，一律沿用现状名称原样输出，不要改写、翻译或另起名。"""
 
 # 编辑人设与风格宪章：以仓库现有人写叙事为风格基准（few-shot 由 main() 注入）。
 # 目标是把模型的默认清单腔校成"先观点后事实、每句承载一个判断"的人写密度。
@@ -165,7 +166,7 @@ def main():
             continue
         bad = [i['slug'] for i in out.get('items', []) if i['slug'] not in known]
         out['items'] = [i for i in out.get('items', []) if i['slug'] in known]
-        draft['phases'].append({'key': key, 'name': out.get('name', cur['name']),
+        draft['phases'].append({'key': key, 'name': cur['name'],
                                 'para': out.get('para', ''), 'note': out.get('note', ''),
                                 'items': out['items']})
         report.append((key, f"条目 {len(cur['items'])}->{len(out['items'])}" + (f'，剔除未知 slug {bad}' if bad else '')))
@@ -184,7 +185,7 @@ def main():
             continue
         bad = [i['slug'] for i in out.get('items', []) if i['slug'] not in known]
         out['items'] = [i for i in out.get('items', []) if i['slug'] in known]
-        draft['regions'].append({'name': out.get('name', cur['name']),
+        draft['regions'].append({'name': cur['name'],
                                  'desc': out.get('desc', ''), 'items': out['items']})
         report.append((cur['name'], f"条目 {len(cur['items'])}->{len(out['items'])}" + (f'，剔除未知 slug {bad}' if bad else '')))
 

@@ -131,7 +131,7 @@
   },
   {
    "key": "2026-08",
-   "name": "产品化交付",
+   "name": "产品化",
    "para": "产品化把重心从代码移向交付物——profile 与 bundle 组合取代固定 overlay，单一 dsh 启动器统一入口，Electron 桌面打包与 Python SDK 共用同一套 dsh profile 运行时。数据层随之硬化——会话日志引入版本机制并改为句柄式持久化，发布格式沿相邻迁移链演进，已提交世代永不删改。安全侧补上浏览器 token 认证；code-mode 更名 PTC。",
    "note": "",
    "items": [
@@ -256,7 +256,7 @@
  ],
  "regions": [
   {
-   "name": "插件微核成形",
+   "name": "Cordis 插件框架",
    "desc": "dsh 的底座：插件向共享上下文贡献服务、类型化事件与可撤销 effect，没有特权核心，agent 循环本身也是插件。工具管线、驱动 turn、ctx.tools 注册表都立在这一层，是首批笔记的产物。",
    "items": [
     {
@@ -310,7 +310,7 @@
    ]
   },
   {
-   "name": "分层组合",
+   "name": "Profile 与 Bundle",
    "desc": "Profile 不是静态清单，而是启动时按有序分层组合出的插件树；bundle 携带配置行与代码，patch 链可以替换任何一行。web、headless、sdk、sdk-minimal、acp 内置 profile 共享 dsh-base 底层，差异收敛到叠放顺序与 patch 覆盖。所有应用只经 dsh profile 启动，Python SDK 也复用同一运行时。Profile 持有实时配置，解析有代际，包刷新与清单失效统一管理，官方按需 bundle 被发现而不被安装。",
    "items": [
     {
