@@ -22,7 +22,7 @@
       var S = api.static, C = api.site;
       var M = api.data.meta;
       var fill = function (s) {
-        return String(s || '').replace(/\{(\w+)\}/g, function (_, k) {
+        return String(s || '').replace(/\{([\w\u4e00-\u9fff]+)\}/g, function (_, k) {
           return vals[k] !== undefined ? vals[k] : (M[k] !== undefined ? M[k] : '');
         });
       };

@@ -72,7 +72,7 @@
   }
   /* 文案中的 {占位符} 以提取元数据填充 */
   function fill(str) {
-    return String(str || '').replace(/\{(\w+)\}/g, function (_, k) {
+    return String(str || '').replace(/\{([\w\u4e00-\u9fff]+)\}/g, function (_, k) {
       return D.meta[k] !== undefined ? D.meta[k] : '';
     });
   }
