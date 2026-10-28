@@ -148,13 +148,16 @@ def main():
     local_impl_dates = [x['d'] for x in notes if x['s'] == 'i']
     try:
         remote_head = git(['log', '-1', '--format=%as', REMOTE]).strip()
+        remote_head_log = git(['log', '-1', '--format=%s', REMOTE]).strip()
     except subprocess.CalledProcessError:
         remote_head = max(dates)
+        remote_head_log = ''
     meta = {
         'first': dates[0],
         'last': dates[-1],
         'weekStart': week0.isoformat(),
         'remoteHead': remote_head,
+        'remoteHeadLog': remote_head_log,
         'localImplLatest': max(local_impl_dates) if local_impl_dates else dates[0],
         'total': len(notes),
         'archived': sum(1 for x in notes if x['s'] == 'a'),
