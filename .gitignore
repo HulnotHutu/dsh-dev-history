@@ -3,3 +3,4 @@
 *.browser-check.json
 *.delivery.json
 narrative.json.bak
+.agents/

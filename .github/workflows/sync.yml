@@ -1,0 +1,86 @@
+name: sync
+# 每日从 dsh 上游拉取笔记，增量提取、构建并重发站点。
+# AI 叙事起草需要仓库 Secrets：DASHSCOPE_API_KEY 与 DASHSCOPE_WORKSPACE（工作区 ID）；
+# 未配置 Secrets 时自动跳过 AI 步骤，账簿数据与站点仍然照常更新。
+on:
+  schedule:
+    - cron: '0 21 * * *'   # UTC 21:00 = 北京时间每日 05:00
+  workflow_dispatch:
+    inputs:
+      apply_narrative:
+        description: 'AI 草稿合入新月份（需已配置 Secrets）'
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: sync
+  cancel-in-progress: true
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+      DASHSCOPE_WORKSPACE: ${{ secrets.DASHSCOPE_WORKSPACE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 拉取 dsh 上游笔记（浅克隆 + sparse，只取 .agents/notes）
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/deepseek-harness/deepseek-harness.git /tmp/dsh
+          git -C /tmp/dsh sparse-checkout set .agents/notes
+          mkdir -p .agents
+          cp -r /tmp/dsh/.agents/notes .agents/notes
+
+      - name: 提取笔记元数据
+        run: python3 tools/extract.py
+
+      - name: 检查是否有更新
+        id: diff
+        run: |
+          if git diff --quiet data/arch-notes.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "上游无更新"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "上游有更新"
+          fi
+
+      - name: 构建
+        if: steps.diff.outputs.changed == 'true'
+        run: python3 tools/build.py
+
+      - name: AI 起草叙事并合入新月份
+        if: steps.diff.outputs.changed == 'true' && env.DASHSCOPE_API_KEY != ''
+        run: |
+          python3 tools/summarize.py
+          if [ "${{ inputs.apply_narrative }}" = "true" ] || [ "${{ github.event_name }}" = "schedule" ]; then
+            python3 tools/summarize.py --merge-new
+            python3 tools/build.py
+          else
+            echo "草稿已生成（content/narrative.draft.json），未合入"
+          fi
+
+      - name: 提交数据与站点
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "sync: 上游笔记更新 $(date -u +%F)"
+          git push origin main
+
+      - name: 发布 gh-pages
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          REPO: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: |
+          TMP=$(mktemp -d)
+          git init -q -b gh-pages "$TMP"
+          cp -r site/. "$TMP"/
+          touch "$TMP/.nojekyll"
+          git -C "$TMP" add -A
+          git -C "$TMP" -c user.name "github-actions[bot]" \
+            -c user.email "github-actions[bot]@users.noreply.github.com" commit -qm "publish site $(date -u +%F)"
+          git -C "$TMP" push -qf "$REPO" gh-pages

@@ -45,7 +45,19 @@
 - 笔记内部链接 `[..](2026-..-..md)` 自动转为账簿深链接；站外链接新窗口打开；指向本站无法解析的仓库文件的链接降级为代码文本。
 - 交叉引用同时汇总为「承接的基础」与被引用计数。
 
-## 更新数据
+## 自动化同步（CI/CD）
+
+`.github/workflows/sync.yml` 每日自动运行（北京时间 05:00，可手动触发）：浅克隆 + sparse 拉取 dsh 上游笔记 → 增量提取 → 检测变化 → 构建 → 重发 gh-pages。上游无更新时静默结束。
+
+AI 叙事层需要仓库 Secrets（Settings → Secrets and variables → Actions）：
+- `DASHSCOPE_API_KEY`
+- `DASHSCOPE_WORKSPACE`（MaaS 工作区 ID）
+
+配置 Secrets 后：数据更新会自动 AI 起草并**合入新月份**的叙事（新月份无人写内容可覆盖）；**已有月份的改写不自动套用**，草稿落在 `content/narrative.draft.json` 供人工校订后 `--apply`。未配置 Secrets 时仅更新数据与站点，新月份叙事留空待补。
+
+手动触发时可在 Actions 页勾选"AI 草稿合入新月份"。
+
+## 手动更新
 
 ```sh
 git fetch origin            # 可选：同步远端，补齐 ◇ 笔记

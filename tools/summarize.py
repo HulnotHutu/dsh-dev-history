@@ -213,7 +213,7 @@ def main():
     notes, meta = data['notes'], data['meta']
     current = json.loads(CURRENT.read_text()) if CURRENT.is_file() else {'site': {}, 'glossary': [], 'phases': [], 'regions': []}
 
-    if check or apply:
+    if check or apply or '--merge-new' in sys.argv:
         if not DRAFT.is_file():
             sys.exit('缺少 content/narrative.draft.json')
         draft = json.loads(DRAFT.read_text())
@@ -222,7 +222,16 @@ def main():
         print(f'== 对账完成：{len(issues)} 条需人工关注 ==')
         for i in issues:
             print('  !', i)
-        if not check:
+        if '--merge-new' in sys.argv:
+            # 只合入数据中新增的月份（AI 起草），已有月份的改写仍需人工 --apply
+            have = {p['key'] for p in current.get('phases', [])}
+            newp = [p for p in draft.get('phases', []) if p['key'] not in have]
+            current['phases'] = sorted(current.get('phases', []) + newp, key=lambda p: p['key'])
+            CURRENT.write_text(json.dumps(current, ensure_ascii=False, indent=1))
+            print(f'--merge-new: 合入新阶段 {len(newp)} 个' +
+                  ('：' + ', '.join(p['key'] + ' ' + p['name'] for p in newp) if newp else ''))
+            print('记得重跑 tools/build.py')
+        elif not check:
             backup = CURRENT.with_suffix('.json.bak')
             if CURRENT.is_file():
                 backup.write_text(CURRENT.read_text())
@@ -251,25 +260,36 @@ def main():
     human_paras = [p['para'] for p in current.get('phases', []) if p.get('para')]
     style = '\n\n'.join(human_paras[:1] + human_paras[-1:])
 
-    for cur in current.get('phases', []):
-        key = cur['key']
+    # 生成范围 = 现有阶段 ∪ 数据中的月份：新月份（如刚过去的 11 月）自动进入 AI 起草
+    months_in_data = sorted({x['d'][:7] for x in notes})
+    cur_phases = {p['key']: p for p in current.get('phases', [])}
+    ordered_keys = sorted(set(cur_phases) | set(months_in_data))
+
+    for key in ordered_keys:
+        seeded = key not in cur_phases
+        cur = cur_phases.get(key) or {'key': key, 'name': '', 'para': [], 'note': [], 'items': []}
         pool = by_month.get(key, [])
-        payload = (f"阶段：{key}（现状名：{cur['name']}）\n"
+        payload = (f"阶段：{key}（现状名：{cur['name'] or '（新阶段，由你命名，4-6字）'}）\n"
                    f"当月决策 {len(pool)} 条：\n{corpus(pool, counts)}\n\n"
                    f"现状条目：\n{json.dumps(cur, ensure_ascii=False, indent=1)}")
         try:
             out = call_ai(PHASE_TASK, payload, style)
         except (RuntimeError, json.JSONDecodeError) as e:
             print(f'warn: 阶段 {key} AI 失败，保留现状 —— {e}', file=sys.stderr)
-            draft['phases'].append(cur)
-            report.append((key, '保留现状'))
+            if not seeded:
+                draft['phases'].append(cur)
+                report.append((key, '保留现状'))
             continue
         bad = [i['slug'] for i in out.get('items', []) if i['slug'] not in known]
         out['items'] = [i for i in out.get('items', []) if i['slug'] in known]
-        draft['phases'].append({'key': key, 'name': cur['name'],
+        # 已有阶段沿用人写名称；新阶段采用 AI 命名
+        name = cur['name'] if not seeded else (out.get('name') or key)
+        draft['phases'].append({'key': key, 'name': name,
                                 'para': out.get('para', ''), 'note': out.get('note', ''),
                                 'items': out['items']})
-        report.append((key, f"条目 {len(cur['items'])}->{len(out['items'])}" + (f'，剔除未知 slug {bad}' if bad else '')))
+        report.append((key, f"条目 {len(cur['items'])}->{len(out['items'])}" +
+                       ('（新阶段）' if seeded else '') +
+                       (f'，剔除未知 slug {bad}' if bad else '')))
 
     all_arch = [x for x in notes if x['s'] in ('a', 'i', 'r')]
     for cur in current.get('regions', []):
