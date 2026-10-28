@@ -3,20 +3,20 @@
   'use strict';
   window.DSH_ARCH.pages.register('ledger', {
     render: function (root, api) {
+      var S = api.static, C = api.site;
       var bm = api.byMonth();
       var M = api.data.meta;
       var lang = api.lang();
       var counts = api.refCounts();
       root.innerHTML =
         '<section class="ledger-tools">' +
-        '<input id="ledger-q" type="search" placeholder="搜索标题、文件名或正文（中英文均可）…"' +
-        ' aria-label="按标题、文件名或正文搜索决策">' +
+        '<input id="ledger-q" type="search" placeholder="' + api.esc(S['账簿-搜索占位']) + '"' +
+        ' aria-label="' + api.esc(S['账簿-搜索aria']) + '">' +
         '<span id="ledger-count" class="small muted" aria-live="polite"></span>' +
         '<button id="lang-toggle" type="button" aria-pressed="' + (lang === 'zh') + '">' +
-        (lang === 'zh' ? '切换到 English 原文' : '切换到中文') + '</button>' +
+        (lang === 'zh' ? S['账簿-切英文'] : S['账簿-切中文']) + '</button>' +
         '</section>' +
-        '<p class="small muted">共 ' + M.total + ' 条，按提出时间排序。点击行展开完整章节（原始 Markdown 渲染）：动机、决策、备选与落选原因、代价与收益、承接的基础。' +
-        '中文取自仓库内每篇笔记的 .zh.md 维护副本（' + Object.keys(api.zh).length + '/' + M.total + ' 篇）。</p>' +
+        '<p class="small muted">' + api.esc(api.fill(C['账簿-说明'])) + '<br>' + api.esc(api.fill(C['账簿-中文来源'])) + '</p>' +
         api.legendHtml() +
         '<div class="ledger" id="ledger-list"></div>';
       var list = root.querySelector('#ledger-list');
@@ -28,7 +28,7 @@
         det.innerHTML = '<summary><span class="vol">' + api.MON[idx] + '</span>' +
           '<span class="m">' + api.monthKey(k) + '</span>' +
           '<span class="phase">' + ph.name + '</span>' +
-          '<span class="count">' + bm[k].length + ' 篇</span></summary>' +
+          '<span class="count">' + bm[k].length + S['篇'] + '</span></summary>' +
           '<p class="phase-note">' + ph.para + '</p>';
         var rows = document.createElement('div');
         rows.className = 'rows';
@@ -64,8 +64,8 @@
 
       function updateCount(q) {
         root.querySelector('#ledger-count').textContent = q
-          ? Array.prototype.filter.call(list.querySelectorAll('.rowd'), function (r) { return !r.hidden; }).length + ' / ' + M.total + ' 条匹配'
-          : '共 ' + M.total + ' 条';
+          ? api.fill(S['账簿-匹配'], { n: Array.prototype.filter.call(list.querySelectorAll('.rowd'), function (r) { return !r.hidden; }).length, total: M.total })
+          : api.fill(S['账簿-计数'], { total: M.total });
       }
     }
   });
@@ -94,27 +94,28 @@
   }
 
   function detailHtml(x, api, counts, lang) {
+    var S = api.static;
     var zh = lang === 'zh' ? (api.zh[x.n] || null) : null;
     function sec(label, enMd, zhMd) {
       var md = (zh && zhMd) ? zhMd : enMd;
       var body = md ? '<div class="md">' + api.md(md) + '</div>'
-                    : '<p class="muted">（本篇没有该章节）</p>';
+                    : '<p class="muted">' + S['账簿-无章节'] + '</p>';
       return '<div class="sec"><span class="lbl">' + label + '</span>' + body + '</div>';
     }
     var refs = (x.out && x.out.length)
       ? x.out.map(function (s) {
           return '<a href="#/ledger?q=' + encodeURIComponent(s) + '"><code>' + s + '</code></a>';
         }).join(' ')
-      : '<span class="muted">（无指向本类其他决策的引用）</span>';
-    return sec('动机', x.p, zh && zh.p) +
-      sec('决策', x.dc, zh && zh.dc) +
-      sec('备选与落选原因', x.alt, zh && zh.alt) +
-      sec('代价与收益', x.cs, zh && zh.cs) +
-      '<p class="sec"><span class="lbl">承接的基础</span>' + refs + '</p>' +
-      '<p class="meta small muted">' + api.STATUS[x.s] + ' · 提出 ' + x.d +
-      (x.ar ? ' · 封存 ' + x.ar : '') +
-      (counts[x.n] ? ' · 被 ' + counts[x.n] + ' 篇后续决策引用' : '') +
-      ' · 全文见 <code>' + x.path + '</code></p>';
+      : '<span class="muted">' + S['账簿-无引用'] + '</span>';
+    return sec(S['账簿-动机'], x.p, zh && zh.p) +
+      sec(S['账簿-决策'], x.dc, zh && zh.dc) +
+      sec(S['账簿-备选'], x.alt, zh && zh.alt) +
+      sec(S['账簿-代价'], x.cs, zh && zh.cs) +
+      '<p class="sec"><span class="lbl">' + S['账簿-承接'] + '</span>' + refs + '</p>' +
+      '<p class="meta small muted">' + api.STATUS[x.s] + ' · ' + api.fill(S['账簿-元提出'], { d: x.d }) +
+      (x.ar ? ' ' + api.fill(S['账簿-元封存'], { ar: x.ar }) : '') +
+      (counts[x.n] ? ' ' + api.fill(S['账簿-元引用'], { n: counts[x.n] }) : '') +
+      ' · ' + api.fill(S['账簿-元全文'], { path: x.path }) + '</p>';
   }
 
   /* 笔记内部链接 -> 账簿深链接；站外链接新窗口；本站无法解析的仓库文件链接降级为代码文本 */

@@ -8,7 +8,7 @@
   }
   function themeOf(slug, themes, fallback) {
     for (var i = 0; i < themes.length; i++) {
-      if (themes[i].re.test(slug)) return themes[i].n;
+      if (themes[i].re.test(slug)) return themes[i].name;
     }
     return fallback;
   }
@@ -34,7 +34,7 @@
       });
       var counts = api.refCounts();
       var themes = (S['近期-主题'] || []).map(function (t) {
-        return { n: t['名'], re: new RegExp(t['匹配'], 'i') };
+        return { name: t.name, re: new RegExp(t.match, 'i') };
       });
       var fallbackTheme = S['近期-未归类'] || '未归类';
       var newPrefix = S['近期-新方向'] || '新方向 · ';

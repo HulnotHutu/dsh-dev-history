@@ -9,6 +9,7 @@
 同时刷新 index.html 里静态资源的 ?v= 版本参数，避免浏览器缓存旧数据。
 """
 import json
+import glob
 import re
 import sys
 from datetime import datetime
@@ -21,6 +22,25 @@ STATIC = HERE / 'content' / 'static.json'
 SITE = HERE / 'site'
 
 STATIC_KEYS = ('站名', '全称', '眉标', '描述模板', '导航', '无脚本提示')
+
+
+def gate_no_hardcoded_copy(site):
+    """尽力而为的文案检查：报告页面脚本中疑似硬编码的中文文案，不阻断构建（约束见 AGENTS.md）。"""
+    member = re.compile(r"\[[^\]\n]*\]")
+    literal = re.compile(r"(['\"])([^'\"]*[一-鿿][^'\"]*)\1")
+    bad = []
+    files = sorted(f for f in glob.glob(str(site / 'pages' / '*.js'))
+                   if not f.endswith('recent.js')) + [str(site / 'js' / 'app.js')]
+    for f in files:
+        for i, line in enumerate(open(f).read().split('\n'), 1):
+            code = re.sub(r'(^|\s)//.*$', r'\1', line)
+            code = member.sub('[]', code)
+            for m in literal.finditer(code):
+                bad.append(f"{Path(f).name}:{i}: {m.group(2)[:48]}")
+    if bad:
+        print(f'warn: 页面脚本仍有 {len(bad)} 处疑似硬编码文案（尽力而为，不阻断）：')
+        for b in bad:
+            print('  -', b)
 
 
 def main():
@@ -63,6 +83,8 @@ def main():
     (SITE / 'js' / 'static.js').write_text(
         '/* 由 tools/build.py 生成；骨架固定文本，源：content/static.json */\n'
         'window.DSH_ARCH_STATIC = ' + json.dumps(static, ensure_ascii=False, separators=(',', ':')) + ';\n')
+
+    gate_no_hardcoded_copy(SITE)
 
     stamp = datetime.now().strftime('%Y%m%d%H%M')
     index = SITE / 'index.html'

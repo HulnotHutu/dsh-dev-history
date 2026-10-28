@@ -3,29 +3,30 @@
   'use strict';
   window.DSH_ARCH.pages.register('overview', {
     render: function (root, api) {
+      var S = api.static;
       var M = api.data.meta;
       var bm = api.byMonth();
       var strip = Object.keys(bm).sort().map(function (k) {
         var ph = api.phaseOf(k) || { name: '', para: [] };
         return '<a href="#/phases?m=' + k + '"><span class="m">' + api.monthKey(k) + ' · ' + ph.name +
-          '</span><span class="c">' + bm[k].length + ' 篇</span>' +
+          '</span><span class="c">' + bm[k].length + S['总览-月卡计数'] + '</span>' +
           '<span class="p">' + ph.para + '</span></a>';
       }).join('');
-      var sweepText = M.sweeps.map(function (s) { return s.date.slice(5) + ' 封 ' + s.count + ' 篇'; }).join('、');
+      var sweepText = M.sweeps.map(function (s) { return api.fill(S['总览-扫除长'], { d: s.date.slice(5), count: s.count }); }).join('、');
       root.innerHTML =
         '<section>' +
         '<p class="lede">' + api.esc(api.fill(api.site['导语'])) + '</p>' +
         '<div class="guide">' +
-        '<p class="small"><i class="i k">●</i> <b>现行</b>——' + api.esc(api.fill(api.site['指南-现行'])) + '</p>' +
-        '<p class="small"><i class="a k">◦</i> <b>已封存</b>——' + api.esc(api.fill(api.site['指南-已封存'])) + '</p>' +
-        '<p class="small"><i class="r k">◇</i> <b>仅远端</b>——' + api.esc(api.fill(api.site['指南-仅远端'])) + '</p>' +
+        '<p class="small"><i class="i k">●</i> <b>' + S['状态名'].i + '</b>——' + api.esc(api.fill(api.site['指南-现行'])) + '</p>' +
+        '<p class="small"><i class="a k">◦</i> <b>' + S['状态名'].a + '</b>——' + api.esc(api.fill(api.site['指南-已封存'])) + '</p>' +
+        '<p class="small"><i class="r k">◇</i> <b>' + S['状态名'].r + '</b>——' + api.esc(api.fill(api.site['指南-仅远端'])) + '</p>' +
         '</div>' +
         '</section>' +
-        '<section><h2>提出与封存的节奏</h2>' +
+        '<section><h2>' + esc(S['总览-节奏']) + '</h2>' +
         '<p class="small muted">' + api.esc(api.site['节奏图说明'] || '') +
-        (M.sweeps.length ? '封存高峰：' + api.esc(sweepText) + '。' : '') + '</p>' +
+        (M.sweeps.length ? api.esc(api.fill(S['总览-封存高峰'], { sweeps: sweepText })) : '') + '</p>' +
         '<div id="cadence" class="cadence"></div></section>' +
-        '<section><h2>逐月主题</h2>' +
+        '<section><h2>' + esc(S['总览-逐月']) + '</h2>' +
         '<p class="small muted">' + api.esc(api.site['逐月说明'] || '') + '</p>' +
         '<div class="month-strip">' + strip + '</div></section>' +
         foundationsSection(api);
@@ -44,12 +45,13 @@
       return '<li><a href="#/ledger?q=' + encodeURIComponent(slug) + '"><b class="n">' + counts[slug] +
         '</b> ' + api.esc(titles[slug] || slug) + '</a></li>';
     }).join('');
-    return '<section><h2>开发的地基</h2>' +
+    return '<section><h2>' + esc(S['总览-地基']) + '</h2>' +
       '<p class="small muted">' + api.esc(api.fill(api.site['地基说明'] || '')) + '</p>' +
       '<ol class="founds">' + items + '</ol></section>';
   }
 
   function drawCadence(fig, api) {
+    var S = api.static;
     var weeks = api.data.weeks;
     var M = api.data.meta;
     var week0 = new Date(M.weekStart + 'T00:00:00Z');
@@ -60,7 +62,7 @@
     var MAXS = weeks.reduce(function (m, w) { return Math.max(m, w.s); }, 0);
     var sumP = weeks.reduce(function (a, w) { return a + w.p; }, 0);
     var sumS = weeks.reduce(function (a, w) { return a + w.s; }, 0);
-    var sweepText = M.sweeps.map(function (s) { return s.date.slice(5) + ' 封 ' + s.count; }).join('、');
+    var sweepText = M.sweeps.map(function (s) { return api.fill(S['总览-扫除短'], { d: s.date.slice(5), count: s.count }); }).join('、');
     function weekIdx(iso) {
       return Math.floor((new Date(iso + 'T00:00:00Z') - week0) / DAY / 7);
     }
@@ -69,7 +71,7 @@
     var d = new Date(week0);
     var last = new Date(week0.getTime() + totalDays * DAY);
     while (d < last) {
-      months.push([d.getUTCMonth() + 1 + '月', (d - week0) / DAY]);
+      months.push([(d.getUTCMonth() + 1) + S['月后缀'], (d - week0) / DAY]);
       d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
     }
     function draw() {
@@ -95,20 +97,21 @@
         return t;
       }
       var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h +
-        '" role="img" aria-label="每周新提出与封存的决策数柱状图。提出贯穿全程，峰值每周 ' + MAXP +
-        ' 篇；封存集中在' + sweepText + '。"><title>每周新提出与封存的决策数</title>';
-      s += lane(topPad, 'p', MAXP || 1, '新提出 · 共 ' + sumP + ' 篇 · 峰值 ' + MAXP + ' 篇/周', 'bar-p');
-      s += lane(topPad + laneH + laneGap, 's', MAXS || 1, '封存入档 · 共 ' + sumS + ' 篇 · 两次大扫除', 'bar-s');
+        '" role="img" aria-label="' + esc(api.fill(S['总览-节奏aria'], { maxp: MAXP, sweeps: sweepText })) +
+        '"><title>' + esc(S['总览-节奏']) + '</title>';
+      s += lane(topPad, 'p', MAXP || 1, api.fill(S['总览-提出lane'], { sum: sumP, max: MAXP }), 'bar-p');
+      s += lane(topPad + laneH + laneGap, 's', MAXS || 1, api.fill(S['总览-封存lane'], { sum: sumS }), 'bar-s');
       weeks.forEach(function (wk, i) {
         var dl = new Date(week0.getTime() + i * 7 * DAY);
         s += '<rect class="hit" x="' + (i * w / n).toFixed(1) + '" y="' + topPad + '" width="' + (w / n).toFixed(1) +
-          '" height="' + (h - topPad - axisH) + '"><title>' + (dl.getUTCMonth() + 1) + '-' + dl.getUTCDate() +
-          ' 一周：新提出 ' + wk.p + '，封存 ' + wk.s + '</title></rect>';
+          '" height="' + (h - topPad - axisH) + '"><title>' + api.fill(S['总览-周提示'], { w: (dl.getUTCMonth() + 1) + '-' + dl.getUTCDate(), p: wk.p, s: wk.s }) + '</title></rect>';
       });
       M.sweeps.forEach(function (sw) {
         var idx = weekIdx(sw.date);
         if (idx < 0 || idx >= n) return;
-        var label = w >= 500 ? sw.date.slice(5) + ' 封 ' + sw.count : '封 ' + sw.count;
+        var label = w >= 500
+          ? api.fill(S['总览-扫除长'], { d: sw.date.slice(5), count: sw.count })
+          : api.fill(S['总览-扫除短'], { count: sw.count });
         var cx = ((idx + 0.5) * w / n).toFixed(1);
         var y = (topPad + laneH + laneGap + laneH - (weeks[idx].s / (MAXS || 1)) * laneH - 6).toFixed(1);
         s += '<text class="sweep" x="' + cx + '" y="' + y + '" text-anchor="middle">' + label + '</text>';

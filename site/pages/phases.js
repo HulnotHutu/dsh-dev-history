@@ -3,19 +3,19 @@
   'use strict';
   window.DSH_ARCH.pages.register('phases', {
     render: function (root, api) {
+      var S = api.static, C = api.site;
       var bm = api.byMonth();
       var status = {};
       api.data.notes.forEach(function (x) { status[x.n] = x.s; });
-      var CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-      var html = '<p class="small muted">每阶段的叙事与承重决策（带一句话注释）。标记含义见' +
-        ' <a href="#/overview">总览</a>；每条的标题、摘要与路径见<a href="#/ledger">账簿</a>。</p>';
+      var CN = api.static['序数'];
+      var html = '<p class="small muted">' + api.esc(C['阶段-说明']) + '</p>';
       api.phasesList.forEach(function (st, idx) {
         var list = bm[st.key] || [];
         var a = list.filter(function (x) { return x.s === 'a'; }).length;
         var i = list.filter(function (x) { return x.s === 'i'; }).length;
         var r = list.filter(function (x) { return x.s === 'r'; }).length;
-        var breakdown = '全月 ' + list.length + ' 篇：' + a + ' 已封存 · ' + (i + r) + ' 现行' +
-          (r ? '（' + r + ' 篇仅远端）' : '');
+        var breakdown = api.fill(S['阶段-全月'], { n: list.length, a: a, i: i + r }) +
+          (r ? api.fill(S['阶段-仅远端段'], { r: r }) : '');
         html += '<section class="phase-block" data-key="' + st.key + '"><header>' +
           '<span class="vol">' + CN[idx] + '</span>' +
           '<span class="m">' + api.monthKey(st.key) + ' · ' + st.name + '</span>' +

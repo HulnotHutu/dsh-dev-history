@@ -21,10 +21,10 @@
   var injected = {};
   var current = null;
 
-  var MON = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+  var MON = S['月序'];
   var MARK = { a: '◦', i: '●', r: '◇' };
   var CLS = { a: 'a', i: 'i', r: 'r' };
-  var STATUS = { a: '已封存', i: '现行', r: '仅远端' };
+  var STATUS = S['状态名'];
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -39,12 +39,8 @@
     });
     return m;
   }
-  function monthKey(k) { return MON[Number(k.slice(5, 7)) - 1] + '月'; }
-  function legendHtml() {
-    return '<p class="legend"><span><i class="i k">●</i> 现行（implemented）</span>' +
-      '<span><i class="a k">◦</i> 已封存（archived，永久冻结）</span>' +
-      '<span><i class="r k">◇</i> 仅存在于远端</span></p>';
-  }
+  function monthKey(k) { return MON[Number(k.slice(5, 7)) - 1] + S['月后缀']; }
+  function legendHtml() { return S['图例']; }
   function refCounts() {
     var c = {};
     D.notes.forEach(function (x) {
@@ -120,13 +116,13 @@
     if (pages[name]) { paint(name); return; }
     if (injected[name]) return;
     injected[name] = true;
-    document.getElementById('page').innerHTML = '<p class="loading" role="status">载入中…</p>';
+    document.getElementById('page').innerHTML = '<p class="loading" role="status">' + esc(S['载入中']) + '</p>';
     var s = document.createElement('script');
     s.src = FILES[name] + '?v=' + encodeURIComponent(VSTAMP);
     s.onload = function () { if (current === name && pages[name]) paint(name); };
     s.onerror = function () {
       if (current === name) document.getElementById('page').innerHTML =
-        '<p class="load-error">页面加载失败：' + esc(FILES[name]) + '</p>';
+        '<p class="load-error">' + esc(S['加载失败']).replace('{path}', esc(FILES[name])) + '</p>';
     };
     document.head.appendChild(s);
   }
