@@ -9,7 +9,7 @@
       var strip = Object.keys(bm).sort().map(function (k) {
         var ph = api.phaseOf(k) || { name: '', para: [] };
         return '<a href="#/phases?m=' + k + '"><span class="m">' + api.monthKey(k) + ' · ' + ph.name +
-          '</span><span class="c">' + bm[k].length + S['总览-月卡计数'] + '</span>' +
+          '</span><span class="c">' + api.fill(S['总览-月卡计数'], { n: bm[k].length }) + '</span>' +
           '<span class="p">' + ph.para + '</span></a>';
       }).join('');
       var sweepText = M.sweeps.map(function (s) { return api.fill(S['总览-扫除长'], { d: s.date.slice(5), count: s.count }); }).join('、');
@@ -22,11 +22,11 @@
         '<p class="small"><i class="r k">◇</i> <b>' + S['状态名'].r + '</b>——' + api.esc(api.fill(api.site['指南-仅远端'])) + '</p>' +
         '</div>' +
         '</section>' +
-        '<section><h2>' + esc(S['总览-节奏']) + '</h2>' +
+        '<section><h2>' + api.esc(S['总览-节奏']) + '</h2>' +
         '<p class="small muted">' + api.esc(api.site['节奏图说明'] || '') +
         (M.sweeps.length ? api.esc(api.fill(S['总览-封存高峰'], { sweeps: sweepText })) : '') + '</p>' +
         '<div id="cadence" class="cadence"></div></section>' +
-        '<section><h2>' + esc(S['总览-逐月']) + '</h2>' +
+        '<section><h2>' + api.esc(S['总览-逐月']) + '</h2>' +
         '<p class="small muted">' + api.esc(api.site['逐月说明'] || '') + '</p>' +
         '<div class="month-strip">' + strip + '</div></section>' +
         foundationsSection(api);
@@ -35,6 +35,7 @@
   });
 
   function foundationsSection(api) {
+    var S = api.static;
     var titles = {};
     api.data.notes.forEach(function (x) {
       titles[x.n] = (api.zh[x.n] && api.zh[x.n].t) || x.t || x.n;
@@ -45,7 +46,7 @@
       return '<li><a href="#/ledger?q=' + encodeURIComponent(slug) + '"><b class="n">' + counts[slug] +
         '</b> ' + api.esc(titles[slug] || slug) + '</a></li>';
     }).join('');
-    return '<section><h2>' + esc(S['总览-地基']) + '</h2>' +
+    return '<section><h2>' + api.esc(S['总览-地基']) + '</h2>' +
       '<p class="small muted">' + api.esc(api.fill(api.site['地基说明'] || '')) + '</p>' +
       '<ol class="founds">' + items + '</ol></section>';
   }
@@ -97,8 +98,8 @@
         return t;
       }
       var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h +
-        '" role="img" aria-label="' + esc(api.fill(S['总览-节奏aria'], { maxp: MAXP, sweeps: sweepText })) +
-        '"><title>' + esc(S['总览-节奏']) + '</title>';
+        '" role="img" aria-label="' + api.esc(api.fill(S['总览-节奏aria'], { maxp: MAXP, sweeps: sweepText })) +
+        '"><title>' + api.esc(S['总览-节奏']) + '</title>';
       s += lane(topPad, 'p', MAXP || 1, api.fill(S['总览-提出lane'], { sum: sumP, max: MAXP }), 'bar-p');
       s += lane(topPad + laneH + laneGap, 's', MAXS || 1, api.fill(S['总览-封存lane'], { sum: sumS }), 'bar-s');
       weeks.forEach(function (wk, i) {

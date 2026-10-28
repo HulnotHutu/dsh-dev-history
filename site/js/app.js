@@ -66,9 +66,10 @@
     }
     return '<p>' + esc(md) + '</p>';
   }
-  /* 文案中的 {占位符} 以提取元数据填充 */
-  function fill(str) {
+  /* 文案中的 {占位符} 填充：vars 是页面现算值，优先于提取元数据 */
+  function fill(str, vars) {
     return String(str || '').replace(/\{([\w\u4e00-\u9fff]+)\}/g, function (_, k) {
+      if (vars && vars[k] !== undefined) return vars[k];
       return D.meta[k] !== undefined ? D.meta[k] : '';
     });
   }
