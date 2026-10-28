@@ -6,7 +6,7 @@
   var D = window.DSH_ARCH;
   var C = window.DSH_ARCH_CONTENT || { site: {}, glossary: [], phases: [], regions: [] };
   var S = window.DSH_ARCH_STATIC || {};
-  var FILES = { overview: 'pages/overview.js', recent: 'pages/recent-proto.js', map: 'pages/map.js', ledger: 'pages/ledger.js', phases: 'pages/phases.js', about: 'pages/about.js' };
+  var FILES = { overview: 'pages/overview.js', recent: 'pages/recent.js', map: 'pages/map.js', ledger: 'pages/ledger.js', phases: 'pages/phases.js', about: 'pages/about.js' };
   /* 页名从 static.json 的导航表派生，避免与导航标签重复维护 */
   var NAV = (S['导航'] || []).filter(function (n) { return FILES[n['路由']]; });
   var NAV_NAME = {};
