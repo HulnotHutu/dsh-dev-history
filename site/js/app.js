@@ -11,6 +11,12 @@
   var NAV = (S['导航'] || []).filter(function (n) { return FILES[n['路由']]; });
   var NAV_NAME = {};
   NAV.forEach(function (n) { NAV_NAME[n['路由']] = n['名称']; });
+  /* 构建时间戳（取自 index 里 app.js 的 ?v=），页面脚本注入时统一附加，防缓存 */
+  var VSTAMP = '';
+  Array.prototype.forEach.call(document.querySelectorAll('script[src]'), function (s) {
+    var m = (s.getAttribute('src') || '').match(/\?v=([^&]+)/);
+    if (m) VSTAMP = m[1];
+  });
   var pages = {};
   var injected = {};
   var current = null;
@@ -116,7 +122,7 @@
     injected[name] = true;
     document.getElementById('page').innerHTML = '<p class="loading" role="status">载入中…</p>';
     var s = document.createElement('script');
-    s.src = FILES[name];
+    s.src = FILES[name] + '?v=' + encodeURIComponent(VSTAMP);
     s.onload = function () { if (current === name && pages[name]) paint(name); };
     s.onerror = function () {
       if (current === name) document.getElementById('page').innerHTML =
