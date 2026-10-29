@@ -1,10 +1,10 @@
 /* 架构：围绕整图组织演进——区域与精选决策来自 content/narrative.json 的「架构区域」章节 */
 (function () {
   'use strict';
-  var CN = api.static['序数'];
   window.DSH_ARCH.pages.register('map', {
     render: function (root, api) {
       var S = api.static, C = api.site;
+      var CN = S['序数'];
       var bySlug = {};
       api.data.notes.forEach(function (x) { bySlug[x.n] = x; });
       var html =

@@ -1,4 +1,4 @@
-/* 账簿：全部 379 条决策，可搜索；行展开后以 Markdown 渲染完整章节；中英切换 */
+/* 账簿：全部决策可搜索；行展开后以 Markdown 渲染完整章节；中英切换 */
 (function () {
   'use strict';
   window.DSH_ARCH.pages.register('ledger', {
