@@ -2,7 +2,7 @@
 """AI 总结层：从 data/arch-notes.json 生成 content/narrative.json 的草稿。
 
 流程：把每月/每区域的紧凑语料（日期、slug、中文标题、状态、被引用数）连同现状文案
-交给 ~/scripts/aihelpme.sh（deepseek-v4-flash），逐段重写叙事与精选决策注释；
+交给 DashScope 兼容模式接口（工作区与模型取自 ~/.config/aihelpme/config.yaml），逐段重写叙事与精选决策注释；
 输出 content/narrative.draft.json 供人工校订——不直接覆盖正式文件。
 
 约束：
@@ -20,13 +20,18 @@ import urllib.request
 import re
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parents[1]
 DATA = HERE / 'data' / 'arch-notes.json'
 CURRENT = HERE / 'content' / 'narrative.json'
 DRAFT = HERE / 'content' / 'narrative.draft.json'
-AI = Path.home() / 'scripts' / 'aihelpme.sh'
+# aihelpmed 的调用配置（workspace_id/model）。CLI 不经 aihelpmed，直接读同一份配置。
+# AIHELPME_CONFIG 可覆盖路径，与 internal/aihelpme/config.go 的解析一致。
+AIHELPME_CONFIG = (os.environ.get('AIHELPME_CONFIG')
+                   or Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config'))
+                   / 'aihelpme' / 'config.yaml')
 
 PHASE_TASK = ('任务：根据当月决策清单（日期/slug/中文标题/状态/被引用数）与该月现状文案，'
               '重写这个阶段的 narrative 条目。')
@@ -55,8 +60,12 @@ SYSTEM_PROMPT = """你是「架构决策编年」的资深编辑，为 DeepSeek 
 
 # DashScope 兼容模式 + response_format: json_object（结构化输出）。
 # 约束：messages 里须含 "JSON" 字样；不设 max_tokens（防 JSON 截断）；模型不支持时降级重试。
-# 工作区 ID 不入库：优先环境变量，否则从用户本地 ~/scripts/aihelpme.sh 解析。
-MODEL = 'deepseek-v4-flash-0731'
+# 工作区 ID 不入库：优先环境变量，否则从用户本地 ~/.config/aihelpme/config.yaml 解析。
+# 模型会到期：DASHSCOPE_MODEL 可临时指定，不落库。
+MODEL = os.environ.get('DASHSCOPE_MODEL', 'qwen3.8-2.4t-a95b')
+AI_TIMEOUT = int(os.environ.get('DASHSCOPE_TIMEOUT', '600'))
+# 阶段/区域任务彼此独立，并发调 AI；默认 4 路避免触发配额限流。
+PARALLEL = int(os.environ.get('DASHSCOPE_PARALLEL', '4'))
 
 
 def endpoint():
@@ -65,10 +74,10 @@ def endpoint():
     if os.environ.get('DASHSCOPE_WORKSPACE'):
         return (f'https://{os.environ["DASHSCOPE_WORKSPACE"]}'
                 '.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions')
-    script = Path.home() / 'scripts' / 'aihelpme.sh'
-    m = re.search(r'WorkspaceId=(\S+)', script.read_text()) if script.is_file() else None
+    cfg = AIHELPME_CONFIG
+    m = re.search(r'workspace_id:\s*(\S+)', cfg.read_text()) if cfg.is_file() else None
     if not m:
-        sys.exit('未找到 DashScope 工作区：设置 DASHSCOPE_WORKSPACE，或确认 ~/scripts/aihelpme.sh 存在')
+        sys.exit('未找到 DashScope 工作区：设置 DASHSCOPE_WORKSPACE，或确认 ~/.config/aihelpme/config.yaml 存在')
     return (f'https://{m.group(1)}'
             '.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions')
 _KEY_CACHE = {}
@@ -92,7 +101,8 @@ def chat(messages, structured):
     req = urllib.request.Request(endpoint(), data=json.dumps(body).encode(),
                                  headers={'Authorization': 'Bearer ' + api_key(),
                                           'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req, timeout=240) as r:
+    # 大参数推理模型出首 token 可能超过 5 分钟；对齐 aihelpmed 默认的 10 分钟。
+    with urllib.request.urlopen(req, timeout=AI_TIMEOUT) as r:
         resp = json.loads(r.read())
     return resp['choices'][0]['message']['content']
 
@@ -265,6 +275,42 @@ def main():
     cur_phases = {p['key']: p for p in current.get('phases', [])}
     ordered_keys = sorted(set(cur_phases) | set(months_in_data))
 
+    def phase_ai(key, cur, payload, seeded):
+        """单阶段任务：调 AI 并对账 slug。返回 (条目|None, 报告行|None)。"""
+        try:
+            out = call_ai(PHASE_TASK, payload, style)
+        except (RuntimeError, json.JSONDecodeError) as e:
+            print(f'warn: 阶段 {key} AI 失败，保留现状 —— {e}', file=sys.stderr)
+            if seeded:
+                return None, None
+            return cur, (key, '保留现状')
+        bad = [i['slug'] for i in out.get('items', []) if i['slug'] not in known]
+        out['items'] = [i for i in out.get('items', []) if i['slug'] in known]
+        # 已有阶段沿用人写名称；新阶段采用 AI 命名
+        name = cur['name'] if not seeded else (out.get('name') or key)
+        entry = {'key': key, 'name': name,
+                 'para': out.get('para', ''), 'note': out.get('note', ''),
+                 'items': out['items']}
+        line = (f"条目 {len(cur['items'])}->{len(out['items'])}" +
+                ('（新阶段）' if seeded else '') +
+                (f'，剔除未知 slug {bad}' if bad else ''))
+        return entry, (key, line)
+
+    def region_ai(cur, payload):
+        """单区域任务：调 AI 并对账 slug。返回 (条目, 报告行)，失败返回现状。"""
+        try:
+            out = call_ai(REGION_TASK, payload)
+        except (RuntimeError, json.JSONDecodeError) as e:
+            print(f'warn: 区域 {cur["name"]} AI 失败，保留现状 —— {e}', file=sys.stderr)
+            return cur, (cur['name'], '保留现状')
+        bad = [i['slug'] for i in out.get('items', []) if i['slug'] not in known]
+        out['items'] = [i for i in out.get('items', []) if i['slug'] in known]
+        entry = {'name': cur['name'], 'desc': out.get('desc', ''), 'items': out['items']}
+        return entry, (cur['name'], f"条目 {len(cur['items'])}->{len(out['items'])}" +
+                       (f'，剔除未知 slug {bad}' if bad else ''))
+
+    # 每段任务只携带自己月份/区域的紧凑语料；13 段互不依赖，交给线程池并发。
+    phase_jobs = []
     for key in ordered_keys:
         seeded = key not in cur_phases
         cur = cur_phases.get(key) or {'key': key, 'name': '', 'para': [], 'note': [], 'items': []}
@@ -272,42 +318,33 @@ def main():
         payload = (f"阶段：{key}（现状名：{cur['name'] or '（新阶段，由你命名，4-6字）'}）\n"
                    f"当月决策 {len(pool)} 条：\n{corpus(pool, counts)}\n\n"
                    f"现状条目：\n{json.dumps(cur, ensure_ascii=False, indent=1)}")
-        try:
-            out = call_ai(PHASE_TASK, payload, style)
-        except (RuntimeError, json.JSONDecodeError) as e:
-            print(f'warn: 阶段 {key} AI 失败，保留现状 —— {e}', file=sys.stderr)
-            if not seeded:
-                draft['phases'].append(cur)
-                report.append((key, '保留现状'))
-            continue
-        bad = [i['slug'] for i in out.get('items', []) if i['slug'] not in known]
-        out['items'] = [i for i in out.get('items', []) if i['slug'] in known]
-        # 已有阶段沿用人写名称；新阶段采用 AI 命名
-        name = cur['name'] if not seeded else (out.get('name') or key)
-        draft['phases'].append({'key': key, 'name': name,
-                                'para': out.get('para', ''), 'note': out.get('note', ''),
-                                'items': out['items']})
-        report.append((key, f"条目 {len(cur['items'])}->{len(out['items'])}" +
-                       ('（新阶段）' if seeded else '') +
-                       (f'，剔除未知 slug {bad}' if bad else '')))
+        phase_jobs.append((key, cur, payload, seeded))
 
     all_arch = [x for x in notes if x['s'] in ('a', 'i', 'r')]
+    region_corpus = corpus(all_arch, counts)
+    region_jobs = []
     for cur in current.get('regions', []):
         payload = (f"架构区域：{cur['name']}\n"
                    f"现状条目：\n{json.dumps(cur, ensure_ascii=False, indent=1)}\n\n"
-                   f"全部决策清单（可从中补充更承重的条目）：\n{corpus(all_arch, counts)}")
-        try:
-            out = call_ai(REGION_TASK, payload)
-        except (RuntimeError, json.JSONDecodeError) as e:
-            print(f'warn: 区域 {cur["name"]} AI 失败，保留现状 —— {e}', file=sys.stderr)
-            draft['regions'].append(cur)
-            report.append((cur['name'], '保留现状'))
-            continue
-        bad = [i['slug'] for i in out.get('items', []) if i['slug'] not in known]
-        out['items'] = [i for i in out.get('items', []) if i['slug'] in known]
-        draft['regions'].append({'name': cur['name'],
-                                 'desc': out.get('desc', ''), 'items': out['items']})
-        report.append((cur['name'], f"条目 {len(cur['items'])}->{len(out['items'])}" + (f'，剔除未知 slug {bad}' if bad else '')))
+                   f"全部决策清单（可从中补充更承重的条目）：\n{region_corpus}")
+        region_jobs.append((cur, payload))
+
+    phase_entries, region_entries = {}, {}
+    with ThreadPoolExecutor(max_workers=PARALLEL) as ex:
+        futs = [ex.submit(phase_ai, *job) for job in phase_jobs]
+        futs += [ex.submit(region_ai, *job) for job in region_jobs]
+        for fut in futs:
+            entry, line = fut.result()
+            if entry and 'key' in entry:
+                phase_entries[entry['key']] = entry
+            elif entry:
+                region_entries[entry['name']] = entry
+            if line:
+                report.append(line)
+
+    draft['phases'] = [phase_entries[k] for k in ordered_keys if k in phase_entries]
+    draft['regions'] = [region_entries[cur['name']] for cur in current.get('regions', [])
+                        if cur['name'] in region_entries]
 
     draft, issues = normalize_draft(draft, notes, current)
     DRAFT.write_text(json.dumps(draft, ensure_ascii=False, indent=1))

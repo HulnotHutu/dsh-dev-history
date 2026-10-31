@@ -4,3 +4,4 @@
 *.delivery.json
 narrative.json.bak
 .agents/
+content/narrative.draft.json
