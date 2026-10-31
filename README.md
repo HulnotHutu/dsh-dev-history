@@ -27,6 +27,14 @@
 
 > 状态标记：● 现行（implemented）· ◦ 已封存（archived，永久冻结）· ◇ 仅存在于远端（本地未同步）。
 
+## 文档
+
+深入阅读：
+
+- [docs/pipeline.md](docs/pipeline.md) —— 数据流水线与契约：extract/build 的字段表、四个运行时全局、前端 api 对象；
+- [docs/ai-layer.md](docs/ai-layer.md) —— AI 叙事层：生成单元与语料、模式与人工闸门、并发模型、接口与配置；
+- [docs/deployment.md](docs/deployment.md) —— 部署与同步：gh-pages 发布通道、sync.yml 每日同步、手动发布。
+
 ## 数据口径
 
 **收录范围（刻意收窄为"决策"）**：站点只收录 `implemented/` + `archived/` 两个生命周期的 architecture 类——即已经做出并落地（或已封存）的结构性决策。**不收录**另外两个生命周期：
