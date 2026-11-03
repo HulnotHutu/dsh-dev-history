@@ -3,12 +3,13 @@
 
 数据源：
   - 本地 .agents/notes/{archived,implemented}/architecture/（英文原件 + .zh.md 中文副本）
-  - 远端 origin/master 上存在而本地缺失的 implemented 笔记（经 git show 读取）
+  - 远端（DSH_REMOTE 指定的 ref，默认 monorepo 的 origin/master）上存在而本地缺失的 implemented 笔记（经 git show 读取）
 
 输出 data/arch-notes.json：{notes: [...], weeks: [...], meta: {...}}
 重复运行安全；远端不可达时自动退化为仅本地口径。
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -16,19 +17,21 @@ from datetime import date, timedelta
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parents[1]  # dsh-dev-history/
-# 本项目通常位于 monorepo 根下；项目自身 git init 后 rev-parse 会指向项目，故向上探测 monorepo 根
-ROOT = None
-_probe = HERE.parent
-while _probe != _probe.parent:
-    if (_probe / '.agents' / 'notes' / 'archived').is_dir():
-        ROOT = _probe
-        break
-    _probe = _probe.parent
+# 笔记来源根：CI 把笔记拷进项目自身，此时用项目；本地（嵌在 monorepo 内）向上探测
+ROOT = HERE if (HERE / '.agents' / 'notes' / 'archived').is_dir() else None
 if ROOT is None:
-    sys.exit('未找到包含 .agents/notes/archived 的 monorepo 根')
+    _probe = HERE.parent
+    while _probe != _probe.parent:
+        if (_probe / '.agents' / 'notes' / 'archived').is_dir():
+            ROOT = _probe
+            break
+        _probe = _probe.parent
+if ROOT is None:
+    sys.exit('未找到包含 .agents/notes/archived 的目录（项目内或上层 monorepo）')
 NOTES = Path(ROOT) / '.agents' / 'notes'
 OUT = Path(__file__).resolve().parents[1] / 'data' / 'arch-notes.json'
-REMOTE = 'origin/master'
+# CI 由 sync.yml 注入临时上游克隆（dsh/master）；本地默认 monorepo 的 origin/master
+REMOTE = os.environ.get('DSH_REMOTE', 'origin/master')
 
 ZH_HEADS = {
     'problem': ['问题', 'Problem'],
