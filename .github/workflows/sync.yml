@@ -28,7 +28,7 @@ jobs:
       - name: 拉取 dsh 上游笔记（浅克隆 + sparse，只取 .agents/notes）
         run: |
           git clone --depth 1 --filter=blob:none --sparse \
-            https://github.com/deepseek-harness/deepseek-harness.git /tmp/dsh
+            https://github.com/deepseek-ai/deepseek-harness.git /tmp/dsh
           git -C /tmp/dsh sparse-checkout set .agents/notes
           mkdir -p .agents
           cp -r /tmp/dsh/.agents/notes .agents/notes
