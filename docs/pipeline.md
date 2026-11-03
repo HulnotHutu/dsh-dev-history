@@ -23,7 +23,7 @@ site/js/{data,data.zh,content,static}.js   （四个 window 全局）
 
 从仓库根（自动向上层查找含 `.agents/notes/archived` 的目录）读取 architecture 类笔记的英文原件与 `.zh.md` 中文副本。只收 `implemented/` 与 `archived/` 两个生命周期；`proposed/` 与 `rejected/` 不在收录范围。
 
-远端补齐：本地缺失而远端 ref 存在的笔记用 `git show` 读取（◇ 仅远端）。远端 ref 由 `DSH_REMOTE` 指定，默认 monorepo 的 `origin/master`；不可达时优雅降级并告警，`remoteHead` 回退为最新决策日期，其余照常。
+远端补齐：本地缺失而远端 ref 存在的笔记用 `git show` 读取（◇ 仅远端）。远端 ref 由 `DSH_REMOTE` 指定（默认 `origin/master`）；CI 用 `DSH_GIT_DIR` 把 git 调用整体指向临时上游克隆的 git 目录。两者都不可达时优雅降级并告警，`remoteHead` 回退为最新决策日期，其余照常。
 
 每条笔记的字段：
 

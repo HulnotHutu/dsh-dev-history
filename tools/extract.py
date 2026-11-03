@@ -30,8 +30,10 @@ if ROOT is None:
     sys.exit('未找到包含 .agents/notes/archived 的目录（项目内或上层 monorepo）')
 NOTES = Path(ROOT) / '.agents' / 'notes'
 OUT = Path(__file__).resolve().parents[1] / 'data' / 'arch-notes.json'
-# CI 由 sync.yml 注入临时上游克隆（dsh/master）；本地默认 monorepo 的 origin/master
+# 远端 ref：CI 由 sync.yml 把 DSH_GIT_DIR 指向临时上游克隆（其 origin/master 即上游
+# master），本地默认 monorepo 仓库的 origin/master；DSH_REMOTE 可覆盖 ref 名
 REMOTE = os.environ.get('DSH_REMOTE', 'origin/master')
+GIT_DIR = os.environ.get('DSH_GIT_DIR')
 
 ZH_HEADS = {
     'problem': ['问题', 'Problem'],
@@ -42,7 +44,12 @@ ZH_HEADS = {
 
 
 def git(args, check=True):
-    return subprocess.run(['git'] + args, cwd=ROOT, capture_output=True, text=True, check=check).stdout
+    cmd = ['git']
+    if GIT_DIR:
+        # 直接读临时克隆的对象库；不要从它 fetch——blobless 克隆无法在
+        # upload-pack 服务期间懒惰补 blob（bad pack header）
+        cmd += ['--git-dir', GIT_DIR]
+    return subprocess.run(cmd + args, cwd=ROOT, capture_output=True, text=True, check=check).stdout
 
 
 def get_section(text, names):

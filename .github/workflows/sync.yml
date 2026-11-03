@@ -33,14 +33,9 @@ jobs:
           mkdir -p .agents
           cp -r /tmp/dsh/.agents/notes .agents/notes
 
-      - name: 注册上游克隆为远端（extract 借此读取 remoteHead）
-        run: |
-          git remote add dsh /tmp/dsh
-          git fetch -q dsh '+refs/heads/master:refs/remotes/dsh/master'
-
       - name: 提取笔记元数据
         env:
-          DSH_REMOTE: dsh/master
+          DSH_GIT_DIR: /tmp/dsh/.git
         run: python3 tools/extract.py
 
       - name: 检查是否有更新

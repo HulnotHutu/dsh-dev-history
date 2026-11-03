@@ -12,7 +12,7 @@ Pages 源设为 `gh-pages` 分支（仓库 Settings → Pages）。发布用 `de
 
 `.github/workflows/sync.yml` 每日北京时间 05:00 运行（cron `0 21 * * *` UTC，可手动触发）：
 
-1. 浅克隆 + sparse checkout 拉取上游 dsh 仓库的 `.agents/notes/`，并把临时克隆注册为 `dsh/master` 远端；提取步骤借此读取 `remoteHead`（`DSH_REMOTE` 注入）；
+1. 浅克隆 + sparse checkout 拉取上游 dsh 仓库的 `.agents/notes/`，提取步骤通过 `DSH_GIT_DIR` 直接读取该克隆的对象库（远端信息 remoteHead 与 ◇ 补齐都发生在克隆内部，不从它 fetch——blobless 浅克隆无法在 upload-pack 服务期间懒惰补 blob）；
 2. 增量提取 → 检测 `data/arch-notes.json` 是否变化；上游无更新时静默结束；
 3. 构建（刷新版本戳）→ 重发 `gh-pages`；
 4. 若配置了 AI Secrets，附带跑 `--merge-new` 只合入新月份叙事（见下）。
