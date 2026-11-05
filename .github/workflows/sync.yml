@@ -83,6 +83,6 @@ jobs:
           cp -r site/. "$TMP"/
           touch "$TMP/.nojekyll"
           git -C "$TMP" add -A
-          git -C "$TMP" -c user.name "github-actions[bot]" \
-            -c user.email "github-actions[bot]@users.noreply.github.com" commit -qm "publish site $(date -u +%F)"
+          git -C "$TMP" -c user.name="github-actions[bot]" \
+            -c user.email="github-actions[bot]@users.noreply.github.com" commit -qm "publish site $(date -u +%F)"
           git -C "$TMP" push -qf "$REPO" gh-pages
