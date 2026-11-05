@@ -275,6 +275,26 @@
      "gloss": "按访问状态注册能力开关"
     }
    ]
+  },
+  {
+   "key": "2026-11",
+   "name": "命名与插槽",
+   "para": "命名和包裹决定扩展身份：subagent 名称记录在创建者目录中，创建者目录成为名称的落点。新增 hoc 插槽类型，插件通过插槽层层包裹宿主内容。新实验包命名不使用 experimental 前缀。决策均处现行状态。",
+   "note": "",
+   "items": [
+    {
+     "slug": "hoc-slot-kind",
+     "gloss": "新增 hoc 插槽类型"
+    },
+    {
+     "slug": "subagent-catalog-names",
+     "gloss": "名称记录在创建者目录中"
+    },
+    {
+     "slug": "unprefixed-experimental-package-names",
+     "gloss": "实验包命名不用 experimental 前缀"
+    }
+   ]
   }
  ],
  "regions": [
