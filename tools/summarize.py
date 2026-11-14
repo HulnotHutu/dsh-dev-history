@@ -61,8 +61,9 @@ SYSTEM_PROMPT = """你是「架构决策编年」的资深编辑，为 DeepSeek 
 # DashScope 兼容模式 + response_format: json_object（结构化输出）。
 # 约束：messages 里须含 "JSON" 字样；不设 max_tokens（防 JSON 截断）；模型不支持时降级重试。
 # 工作区 ID 不入库：优先环境变量，否则从用户本地 ~/.config/aihelpme/config.yaml 解析。
-# 模型会到期：DASHSCOPE_MODEL 可临时指定，不落库。
-MODEL = os.environ.get('DASHSCOPE_MODEL', 'qwen3.8-2.4t-a95b')
+# 模型会到期：默认选免费额度模型；额度耗尽/到期后 DashScope 自动转按量计费，扣真实余额。
+# 到期前用 DASHSCOPE_MODEL 临时指定新模型，不落库。
+MODEL = os.environ.get('DASHSCOPE_MODEL', 'qwen3.8-flash')
 AI_TIMEOUT = int(os.environ.get('DASHSCOPE_TIMEOUT', '600'))
 # 阶段/区域任务彼此独立，并发调 AI；默认 4 路避免触发配额限流。
 PARALLEL = int(os.environ.get('DASHSCOPE_PARALLEL', '4'))
